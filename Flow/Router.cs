@@ -25,7 +25,7 @@ namespace Flow
 			observers = new List<IObserver<Request>>();
 			Ports = new PortList(ports);
 			var listeners = new List<TcpListener>();
-			for(var port in Ports)
+			foreach(var port in Ports)
 				listeners.Add(new TcpListener(IPAddress.Any, port));
 		}
 		public Router(int port)
