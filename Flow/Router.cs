@@ -27,10 +27,6 @@ namespace Flow
 			var listeners = new List<TcpListener>();
 			for(var port in Ports)
 				listeners.Add(new TcpListener(IPAddress.Any, port));
-			//tcpListeners =
-			//    ports
-			//    .Select(port => new TcpListener(IPAddress.Any, port))
-			//    .ToList();
 		}
 		public Router(int port)
 			: this(new[] { port })
