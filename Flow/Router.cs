@@ -72,7 +72,7 @@ namespace Flow
 		LinkedList<int> ports;
 		public PortList(IEnumerable<int> ports)
 		{
-			ports = new LinkedList<int>(ports);
+			this.ports = new LinkedList<int>(ports);
 		}
 
 		public event EventHandler<PortListEventArgs> PortAdded;
