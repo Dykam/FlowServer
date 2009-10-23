@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
+using System.IO;
 
 namespace Flow
 {
@@ -10,6 +11,7 @@ namespace Flow
 	{
 		TcpClient client;
 		NetworkStream stream;
+		TextReader reader;
 		StreamingState state;
 		LinkedList<string> lines;
 
@@ -26,8 +28,8 @@ namespace Flow
 		public Request(TcpClient newClient)
 		{
 			client = newClient;
-
 			stream = client.GetStream();
+			reader = (TextReader)stream;
 
 			state = StreamingState.Headers;
 
@@ -43,24 +45,24 @@ namespace Flow
 					}
 					return default(KeyValuePair<string, string>);
 				});
+			builder = new StringBuilder();
 		}
 
 		public void StreamToEnd()
 		{
-
+			while (StreamLine()) ;
 		}
 
-		public void StreamNext()
+		public bool StreamLine()
 		{
-
-		}
-
-		public bool StreamDataAvailable
-		{
-			get
-			{
-				return stream.DataAvailable;
+			if (!StreamedToEnd) {
+				var line = reader.ReadLine();
+				if (String.IsNullOrEmpty(line))
+					StreamedToEnd = true;
+				else
+					lines.AddLast(line);
 			}
+			return !StreamedToEnd;
 		}
 
 		protected enum StreamingState
@@ -71,7 +73,7 @@ namespace Flow
 
 		public void Dispose()
 		{
-			
+			throw new NotImplementedException();
 		}
 	}
 }
