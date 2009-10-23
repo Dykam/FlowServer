@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Flow
 {
-	internal class ProcessorDisposer : IDisposable
+	class ProcessorDisposer : IDisposable
 	{
 		Action<Predicate<Request>> detach;
 		Predicate<Request> processor;

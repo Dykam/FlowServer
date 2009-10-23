@@ -11,9 +11,10 @@ namespace Flow
 	{
 		TcpClient client;
 		NetworkStream stream;
+		Stream body;
 		TextReader reader;
-		StreamingState state;
 		LinkedList<string> lines;
+		bool disposed;
 
 		public string Method { get; private set; }
 		public string Version { get; private set; }
@@ -23,19 +24,17 @@ namespace Flow
 		public IEnumerable<string> HeaderLines { get; private set; }
 		public IEnumerable<KeyValuePair<string, string>> Headers { get; private set; }
 
-		public Boolean StreamedToEnd { get; private set; }
+		public bool HeadersCompleted { get; private set; }
 
 		public Request(TcpClient newClient)
 		{
 			client = newClient;
 			stream = client.GetStream();
-			reader = (TextReader)stream;
-
-			state = StreamingState.Headers;
+			reader = (TextReader)new StreamReader(stream);
 
 			Lines = lines;
 			HeaderLines = lines.TakeWhile(line => line != "\n");
-			Headers = 
+			Headers =
 				HeaderLines
 				.Select(line =>
 				{
@@ -45,35 +44,44 @@ namespace Flow
 					}
 					return default(KeyValuePair<string, string>);
 				});
-			builder = new StringBuilder();
 		}
 
-		public void StreamToEnd()
+		public void CompleteHeaders()
 		{
-			while (StreamLine()) ;
+			while (StreamHeaderLine()) ;
+			body = new StreamWrapper(stream);
 		}
 
-		public bool StreamLine()
+		public bool StreamHeaderLine()
 		{
-			if (!StreamedToEnd) {
+			if (!HeadersCompleted) {
 				var line = reader.ReadLine();
-				if (String.IsNullOrEmpty(line))
-					StreamedToEnd = true;
-				else
+				if (String.IsNullOrEmpty(line)) {
+					HeadersCompleted = true;
+					body = new StreamWrapper(stream);
+				} else {
 					lines.AddLast(line);
+				}
 			}
-			return !StreamedToEnd;
+			return !HeadersCompleted;
 		}
 
-		protected enum StreamingState
+		public Stream Body
 		{
-			Headers,
-			Body
+			get
+			{
+				if (body == null) CompleteHeaders();
+				return body;
+			}
 		}
 
 		public void Dispose()
 		{
-			throw new NotImplementedException();
+			if (!disposed) {
+				stream.Dispose();
+				client.Close();
+				disposed = true;
+			}
 		}
 	}
 }

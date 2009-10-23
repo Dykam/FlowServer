@@ -9,11 +9,10 @@ using System.Net;
 
 namespace Flow
 {
-	public partial class Router
+	public partial class Router : IDisposable
 	{
 		protected List<Listener> Listeners;
 		protected List<Predicate<Request>> Processors;
-		public IEnumerable<Thread> Threads { get; private set; }
 		public PortList Ports { get; private set; }
 		protected EventWaitHandle Handle;
 		public bool Running { get; private set; }
@@ -31,9 +30,6 @@ namespace Flow
 				ports
 				.Select(port => new Listener(port, Handle, Processors))
 				.ToList();
-
-			// As it is an enumerable, it updates live.
-			Threads = Listeners.Select(listener => listener.Thread);
 		}
 
 		public Router(int port)
@@ -85,6 +81,14 @@ namespace Flow
 		{
 			if (Processors.Contains(processor))
 				Processors.Remove(processor);
+		}
+
+		public void Dispose()
+		{
+			Stop();
+			foreach (var listener in Listeners) {
+				listener.Dispose();
+			}
 		}
 	}
 }
