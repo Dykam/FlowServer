@@ -11,9 +11,9 @@ namespace Flow.FileServer
 		static void Main(string[] args)
 		{
 			var router = new Router();
-			router.Do(request =>
+			router.Subscribe(request =>
 			{
-
+				return false;
 			});
 			router.Start();
 		}
