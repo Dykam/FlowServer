@@ -11,7 +11,6 @@ namespace Flow
 {
 	public partial class Router
 	{
-
 		protected List<Listener> Listeners;
 		protected List<Predicate<Request>> Processors;
 		public IEnumerable<Thread> Threads { get; private set; }
@@ -23,8 +22,8 @@ namespace Flow
 		{
 			Processors = new List<Predicate<Request>>();
 			Ports = new PortList(ports);
-			Ports.PortAdded += new EventHandler<PortList.PortListEventArgs>(Ports_PortAdded);
-			Ports.PortRemoved += new EventHandler<PortList.PortListEventArgs>(Ports_PortRemoved);
+			Ports.PortAdded += new EventHandler<PortList.PortListEventArgs>(PortAdded);
+			Ports.PortRemoved += new EventHandler<PortList.PortListEventArgs>(PortRemoved);
 
 			Handle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
@@ -37,124 +36,55 @@ namespace Flow
 			Threads = Listeners.Select(listener => listener.Thread);
 		}
 
-		void Ports_PortRemoved(object sender, PortList.PortListEventArgs e)
-		{
-			Listeners.RemoveAll(listener => listener.Port == e.Port);
-		}
-
-		void Ports_PortAdded(object sender, PortList.PortListEventArgs e)
-		{
-			var listener = new Listener(e.Port, Handle, Processors);
-			Listeners.Add(listener);
-		}
 		public Router(int port)
 			: this(new[] { port })
 		{
 		}
+
 		public Router()
 			: this(80)
 		{
 		}
 
+		void PortRemoved(object sender, PortList.PortListEventArgs e)
+		{
+			Listeners.RemoveAll(listener => listener.Port == e.Port);
+		}
+
+		void PortAdded(object sender, PortList.PortListEventArgs e)
+		{
+			var listener = new Listener(e.Port, Handle, Processors);
+			Listeners.Add(listener);
+		}
+
 		public void Start()
 		{
+			foreach (var listener in Listeners) {
+				listener.TcpListener.Start();
+			}
 			Handle.Set();
 			Running = true;
 		}
 
 		public void Stop()
 		{
+			foreach (var listener in Listeners) {
+				listener.TcpListener.Stop();
+			}
 			Handle.Reset();
 			Running = false;
 		}
 
-		public IDisposable Subscribe(Predicate<Request> processor)
+		public IDisposable Add(Predicate<Request> processor)
 		{
 			Processors.Add(processor);
-			return new ProcessorDisposer(Unsubscribe, processor);
+			return new ProcessorDisposer(Remove, processor);
 		}
 
-		public void Unsubscribe(Predicate<Request> processor)
+		public void Remove(Predicate<Request> processor)
 		{
 			if (Processors.Contains(processor))
 				Processors.Remove(processor);
-		}
-
-		protected class Listener : IDisposable
-		{
-			const int timeoutTime = 10000;
-
-			public Thread @Thread;
-			public Thread HandleRequestThread;
-			public TcpListener TcpListener;
-			public int Port;
-			public EventWaitHandle Handle;
-			public EventWaitHandle HandleRequestHandle;
-			public Queue<TcpClient> Clients;
-			public object ClientsLock;
-
-			IEnumerable<Predicate<Request>> Processors;
-			bool dispose;
-			public Listener(int port, EventWaitHandle handle, IEnumerable<Predicate<Request>> Processors)
-			{
-				Port = port;
-				TcpListener = new TcpListener(IPAddress.Any, port);
-				Thread = new Thread(listen);
-				HandleRequestThread = new Thread(clientsHandler);
-
-				Clients = new Queue<TcpClient>();
-
-				Handle = handle;
-				HandleRequestHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-				dispose = false;
-				this.Processors = Processors;
-				Thread.Start();
-				HandleRequestThread.Start();
-			}
-			void listen()
-			{
-				while (true) {
-					var signalled = Handle.WaitOne(timeoutTime);
-					if (dispose) {
-						return;
-					}
-					if (signalled) {
-						var client = TcpListener.AcceptTcpClient();
-						lock (ClientsLock) {
-							Clients.Enqueue(client);
-						}
-						HandleRequestHandle.Set();
-					}
-				}
-			}
-
-			void clientsHandler()
-			{
-				while (true) {
-					var signalled = HandleRequestHandle.WaitOne(timeoutTime);
-					if (dispose) {
-						return;
-					}
-					if (signalled) {
-						while (true) {
-							TcpClient client;
-							lock (Clients) {
-								if (Clients.Count == 0) break;
-								client = Clients.Dequeue();
-							}
-							var request = new Request(client);
-							foreach (var processor in Processors) {
-								if (processor(request)) break;
-							}
-						}
-					}
-				}
-			}
-
-			public void Dispose()
-			{
-				dispose = true;
-			}
 		}
 	}
 }
