@@ -24,26 +24,10 @@ namespace Flow.FileServer
 
 				var reader = (TextReader) new StreamReader(request.Body);
 				var line = reader.ReadLine();
-				while(!String.IsNullOrEmpty(line)) {
+				while (!String.IsNullOrEmpty(line)) {
 					line = reader.ReadLine();
 					Console.WriteLine("[{0}] {1}", myNumber, line);
 				}
-
-				var writer = (TextWriter) new StreamWriter(request.Body);
-				writer.WriteLine("HTTP/1.1 200 OK");
-				writer.WriteLine("content-length: *");
-				writer.WriteLine();
-				writer.WriteLine(@"
-<html>
-	<head>
-		<title>It works!</title>
-	</head>
-	<body>
-		It works really!.
-	</body>
-</html>
-");
-
 				writer.Flush();
 				request.Dispose();
 				Console.WriteLine("[{0}] Closed", myNumber);

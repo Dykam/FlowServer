@@ -15,6 +15,7 @@ namespace Flow
 		TextReader reader;
 		LinkedList<string> lines;
 		bool disposed;
+		ResponseHeaders response;
 
 		public string Method { get; private set; }
 		public string Version { get; private set; }
@@ -50,16 +51,20 @@ namespace Flow
 
 		public ResponseHeaders Respond(string version, int status, string statusMessage)
 		{
+			if (response == null)
+				throw new Exception("You cannot instantiate a response twice or more times.");
+			var writer = (TextWriter)new StreamWriter(stream);
+			writer.WriteLine("{0} {1} {2}", version, status, statusMessage);
 			return new ResponseHeaders(new WriteOnlyStreamWrapper(stream));
 		}
 
 		public void CompleteHeaders()
 		{
-			while (StreamHeaderLine()) ;
+			while (DoHeader()) ;
 			body = new StreamWrapper(stream);
 		}
 
-		public bool StreamHeaderLine()
+		public bool DoHeader()
 		{
 			if (!HeadersCompleted) {
 				var line = reader.ReadLine();
