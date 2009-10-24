@@ -24,13 +24,15 @@ namespace Flow
 		public IEnumerable<string> HeaderLines { get; private set; }
 		public IEnumerable<KeyValuePair<string, string>> Headers { get; private set; }
 
-		public bool HeadersCompleted { get; private set; }
+		public bool HeadersCompleted { get { return body == null; } }
 
 		public Request(TcpClient newClient)
 		{
 			client = newClient;
 			stream = client.GetStream();
 			reader = (TextReader)new StreamReader(stream);
+
+			lines = new LinkedList<string>();
 
 			Lines = lines;
 			HeaderLines = lines.TakeWhile(line => line != "\n");
@@ -46,6 +48,11 @@ namespace Flow
 				});
 		}
 
+		public ResponseHeaders Respond(string version, int status, string statusMessage)
+		{
+			return new ResponseHeaders(new WriteOnlyStreamWrapper(stream));
+		}
+
 		public void CompleteHeaders()
 		{
 			while (StreamHeaderLine()) ;
@@ -57,8 +64,7 @@ namespace Flow
 			if (!HeadersCompleted) {
 				var line = reader.ReadLine();
 				if (String.IsNullOrEmpty(line)) {
-					HeadersCompleted = true;
-					body = new StreamWrapper(stream);
+					body = new ReadOnlyStreamWrapper(stream);
 				} else {
 					lines.AddLast(line);
 				}

@@ -31,6 +31,7 @@ namespace Flow
 				TcpListener = new TcpListener(IPAddress.Any, port);
 				Thread = new Thread(listen);
 				HandleRequestThread = new Thread(clientsHandler);
+				ClientsLock = new object();
 
 				Clients = new Queue<TcpClient>();
 

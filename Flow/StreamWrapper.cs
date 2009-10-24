@@ -12,7 +12,13 @@ namespace Flow
 		Stream source;
 		public StreamWrapper(Stream source)
 		{
-			offset = source.Position;
+			this.source = source;
+			try {
+				offset = source.Position;
+			}
+			catch (NotSupportedException) {
+				// Not implemented
+			}
 		}
 
 		public override bool CanRead
@@ -70,6 +76,36 @@ namespace Flow
 		public override void Write(byte[] buffer, int offset, int count)
 		{
 			source.Write(buffer, offset, count);
+		}
+	}
+
+	class ReadOnlyStreamWrapper : StreamWrapper
+	{
+		public ReadOnlyStreamWrapper(Stream source)
+			: base(source)
+		{
+		}
+		public override bool CanWrite
+		{
+			get
+			{
+				return false;
+			}
+		}
+	}
+
+	class WriteOnlyStreamWrapper : StreamWrapper
+	{
+		public WriteOnlyStreamWrapper(Stream source)
+			: base(source)
+		{
+		}
+		public override bool CanRead
+		{
+			get
+			{
+				return false;
+			}
 		}
 	}
 }
