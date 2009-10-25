@@ -30,7 +30,9 @@ namespace Flow
 				Port = port;
 				TcpListener = new TcpListener(IPAddress.Any, port);
 				Thread = new Thread(listen);
+				Thread.Name = "ListenerThread Port " + Port.ToString();
 				HandleRequestThread = new Thread(clientsHandler);
+				HandleRequestThread.Name = "HandleRequestThread Port " + Port.ToString();
 				ClientsLock = new object();
 
 				Clients = new Queue<TcpClient>();
@@ -73,9 +75,16 @@ namespace Flow
 								if (Clients.Count == 0) break;
 								client = Clients.Dequeue();
 							}
-							var request = new Request(client);
+							var request = new Request(client, Port);
+							bool accepted = false;
 							foreach (var processor in Processors) {
-								if (processor(request)) break;
+								if (processor(request)) {
+									accepted = true;
+									break;
+								}
+							}
+							if (!accepted) {
+								request.Respond("HTTP/1.1", 500, 0).Finish().Close();
 							}
 						}
 					}

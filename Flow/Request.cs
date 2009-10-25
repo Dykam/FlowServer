@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Flow
 {
@@ -11,27 +12,40 @@ namespace Flow
 	{
 		TcpClient client;
 		NetworkStream stream;
-		Stream body;
+		ReadOnlyNetworkStream body;
 		TextReader reader;
 		LinkedList<string> lines;
 		bool disposed;
-		ResponseHeaders response;
+		HeaderBuilder response;
+
+		static Regex firstLineParser;
+		internal static Regex FirstLineParser
+		{
+			get
+			{
+				return firstLineParser == null ? firstLineParser = new Regex("^(?<Method>[A-Za-z]+) (?<Path>.*) (?<Version>[^ ]+)$", RegexOptions.Compiled) : firstLineParser;
+			}
+		}
 
 		public string Method { get; private set; }
-		public string Version { get; private set; }
 		public string Path { get; private set; }
+		public string Version { get; private set; }
+		public int Port { get; private set; }
 
 		public IEnumerable<string> Lines { get; private set; }
 		public IEnumerable<string> HeaderLines { get; private set; }
 		public IEnumerable<KeyValuePair<string, string>> Headers { get; private set; }
 
-		public bool HeadersCompleted { get { return body == null; } }
+		public bool HeadersCompleted { get { return body != null; } }
 
-		public Request(TcpClient newClient)
+		public Request(TcpClient newClient, int port, Func<int, string> statusMessageFetcher)
 		{
+			GetStatusMessage = statusMessageFetcher;
+
 			client = newClient;
 			stream = client.GetStream();
 			reader = (TextReader)new StreamReader(stream);
+			Port = port;
 
 			lines = new LinkedList<string>();
 
@@ -47,29 +61,46 @@ namespace Flow
 					}
 					return default(KeyValuePair<string, string>);
 				});
+
+			var firstLine = FirstLineParser.Match(reader.ReadLine());
+			Method = firstLine.Groups["Method"].ToString();
+			Path = firstLine.Groups["Path"].ToString();
+			Version = firstLine.Groups["Version"].ToString();
 		}
 
-		public ResponseHeaders Respond(string version, int status, string statusMessage)
+		public Request(TcpClient newClient, int port)
+			: this(newClient, port, status => (String)Properties.Settings.Default["Status" + status.ToString()])
 		{
-			if (response == null)
+		}
+
+		public HeaderBuilder Respond(string version, int status, string statusMessage, long contentLength)
+		{
+			if (response != null)
 				throw new Exception("You cannot instantiate a response twice or more times.");
 			var writer = (TextWriter)new StreamWriter(stream);
 			writer.WriteLine("{0} {1} {2}", version, status, statusMessage);
-			return new ResponseHeaders(new WriteOnlyStreamWrapper(stream));
+			writer.Flush();
+			response = new HeaderBuilder(new WriteOnlyStreamWrapper(stream));
+			response.ContentLength = contentLength;
+			return response;
+		}
+		public HeaderBuilder Respond(string version, int status, long contentLength)
+		{
+			return Respond(version, status, GetStatusMessage(status), contentLength);
 		}
 
 		public void CompleteHeaders()
 		{
-			while (DoHeader()) ;
-			body = new StreamWrapper(stream);
+			while (FetchHeader()) ;
+			body = new ReadOnlyNetworkStream(stream);
 		}
 
-		public bool DoHeader()
+		public bool FetchHeader()
 		{
 			if (!HeadersCompleted) {
 				var line = reader.ReadLine();
 				if (String.IsNullOrEmpty(line)) {
-					body = new ReadOnlyStreamWrapper(stream);
+					body = new ReadOnlyNetworkStream(stream);
 				} else {
 					lines.AddLast(line);
 				}
@@ -77,7 +108,7 @@ namespace Flow
 			return !HeadersCompleted;
 		}
 
-		public Stream Body
+		public ReadOnlyNetworkStream Body
 		{
 			get
 			{
@@ -89,10 +120,13 @@ namespace Flow
 		public void Dispose()
 		{
 			if (!disposed) {
-				stream.Dispose();
-				client.Close();
+				if (stream != null) stream.Dispose();
+				if (client != null) client.Close();
+				if(response != null) response.Dispose();
 				disposed = true;
 			}
 		}
+
+		public static Func<int, string> GetStatusMessage { get; set; }
 	}
 }

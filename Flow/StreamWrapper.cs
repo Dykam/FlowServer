@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Net.Sockets;
 
 namespace Flow
 {
-	class StreamWrapper : Stream
+	public class StreamWrapper<T> : Stream
+		where T : Stream
 	{
 		long offset;
-		Stream source;
-		public StreamWrapper(Stream source)
+		protected T Source;
+		internal StreamWrapper(T source)
 		{
-			this.source = source;
+			this.Source = source;
 			try {
 				offset = source.Position;
 			}
@@ -23,65 +25,65 @@ namespace Flow
 
 		public override bool CanRead
 		{
-			get { return source.CanRead; }
+			get { return Source.CanRead; }
 		}
 
 		public override bool CanSeek
 		{
-			get { return source.CanSeek; }
+			get { return Source.CanSeek; }
 		}
 
 		public override bool CanWrite
 		{
-			get { return source.CanWrite; }
+			get { return Source.CanWrite; }
 		}
 
 		public override void Flush()
 		{
-			source.Flush();
+			Source.Flush();
 		}
 
 		public override long Length
 		{
-			get { return source.Length - offset; }
+			get { return Source.Length - offset; }
 		}
 
 		public override long Position
 		{
 			get
 			{
-				return source.Position - offset;
+				return Source.Position - offset;
 			}
 			set
 			{
-				source.Position = value + offset;
+				Source.Position = value + offset;
 			}
 		}
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			return source.Read(buffer, offset, count);
+			return Source.Read(buffer, offset, count);
 		}
 
 		public override long Seek(long offset, SeekOrigin origin)
 		{
-			return source.Seek(offset + offset, origin);
+			return Source.Seek(offset + offset, origin);
 		}
 
 		public override void SetLength(long value)
 		{
-			source.SetLength(value + offset);
+			Source.SetLength(value + offset);
 		}
 
 		public override void Write(byte[] buffer, int offset, int count)
 		{
-			source.Write(buffer, offset, count);
+			Source.Write(buffer, offset, count);
 		}
 	}
 
-	class ReadOnlyStreamWrapper : StreamWrapper
+	public class ReadOnlyNetworkStream : StreamWrapper<NetworkStream>
 	{
-		public ReadOnlyStreamWrapper(Stream source)
+		internal ReadOnlyNetworkStream(NetworkStream source)
 			: base(source)
 		{
 		}
@@ -92,9 +94,25 @@ namespace Flow
 				return false;
 			}
 		}
+		public override void Write(byte[] buffer, int offset, int count)
+		{
+			throw new NotSupportedException("This stream is read only.");
+		}
+		public override void WriteByte(byte value)
+		{
+			throw new NotSupportedException("This stream is read only.");
+		}
+
+		public bool DataAvailable
+		{
+			get
+			{
+				return Source.DataAvailable;
+			}
+		}
 	}
 
-	class WriteOnlyStreamWrapper : StreamWrapper
+	class WriteOnlyStreamWrapper : StreamWrapper<Stream>
 	{
 		public WriteOnlyStreamWrapper(Stream source)
 			: base(source)
@@ -106,6 +124,14 @@ namespace Flow
 			{
 				return false;
 			}
+		}
+		public override int Read(byte[] buffer, int offset, int count)
+		{
+			throw new NotSupportedException("This stream is write only.");
+		}
+		public override int ReadByte()
+		{
+			throw new NotSupportedException("This stream is write only.");
 		}
 	}
 }

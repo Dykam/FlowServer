@@ -1,0 +1,171 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Flow.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="Status404" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Found</Value>
+    </Setting>
+    <Setting Name="Status405" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Method Not Allowed</Value>
+    </Setting>
+    <Setting Name="Status100" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Continue</Value>
+    </Setting>
+    <Setting Name="Status101" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Switching Protocols</Value>
+    </Setting>
+    <Setting Name="Status102" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Processing</Value>
+    </Setting>
+    <Setting Name="Status200" Type="System.String" Scope="User">
+      <Value Profile="(Default)">OK</Value>
+    </Setting>
+    <Setting Name="Status201" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Created</Value>
+    </Setting>
+    <Setting Name="Status202" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Accepted</Value>
+    </Setting>
+    <Setting Name="Status203" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Non-Authoritative Information</Value>
+    </Setting>
+    <Setting Name="Status204" Type="System.String" Scope="User">
+      <Value Profile="(Default)">No Content</Value>
+    </Setting>
+    <Setting Name="Status205" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Reset Content</Value>
+    </Setting>
+    <Setting Name="Status206" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Partial Content</Value>
+    </Setting>
+    <Setting Name="Status207" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Multi-Status</Value>
+    </Setting>
+    <Setting Name="Status300" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Multiple Choices</Value>
+    </Setting>
+    <Setting Name="Status301" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Moved Permanently</Value>
+    </Setting>
+    <Setting Name="Status302" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Found</Value>
+    </Setting>
+    <Setting Name="Status303" Type="System.String" Scope="User">
+      <Value Profile="(Default)">See Other</Value>
+    </Setting>
+    <Setting Name="Status304" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Modified</Value>
+    </Setting>
+    <Setting Name="Status305" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Use Proxy</Value>
+    </Setting>
+    <Setting Name="Status306" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Switch Proxy</Value>
+    </Setting>
+    <Setting Name="Status307" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Temporary Redirect</Value>
+    </Setting>
+    <Setting Name="Status400" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Bad Request</Value>
+    </Setting>
+    <Setting Name="Status401" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Unauthorized</Value>
+    </Setting>
+    <Setting Name="Status402" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Payment Required</Value>
+    </Setting>
+    <Setting Name="Status403" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Forbidden</Value>
+    </Setting>
+    <Setting Name="Status406" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Acceptable</Value>
+    </Setting>
+    <Setting Name="Status407" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Proxy Authentication Required</Value>
+    </Setting>
+    <Setting Name="Status408" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Request Timeout</Value>
+    </Setting>
+    <Setting Name="Status409" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Conflict</Value>
+    </Setting>
+    <Setting Name="Status410" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Gone</Value>
+    </Setting>
+    <Setting Name="Status411" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Length Required</Value>
+    </Setting>
+    <Setting Name="Status412" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Precondition Failed</Value>
+    </Setting>
+    <Setting Name="Status413" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Request Entity Too Large</Value>
+    </Setting>
+    <Setting Name="Status414" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Request-URI Too Long</Value>
+    </Setting>
+    <Setting Name="Status415" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Unsupported Media Type</Value>
+    </Setting>
+    <Setting Name="Status416" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Requested Range Not Satisfiable</Value>
+    </Setting>
+    <Setting Name="Status417" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Expectation Failed</Value>
+    </Setting>
+    <Setting Name="Status418" Type="System.String" Scope="User">
+      <Value Profile="(Default)">I'm a teapot</Value>
+    </Setting>
+    <Setting Name="Status422" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Unprocessable Entity</Value>
+    </Setting>
+    <Setting Name="Status423" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Locked</Value>
+    </Setting>
+    <Setting Name="Status424" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Failed Dependency</Value>
+    </Setting>
+    <Setting Name="Status425" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Unordered Collection</Value>
+    </Setting>
+    <Setting Name="Status426" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Upgrade Required</Value>
+    </Setting>
+    <Setting Name="Status449" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Retry With</Value>
+    </Setting>
+    <Setting Name="Status450" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Blocked by Windows Parental Controls</Value>
+    </Setting>
+    <Setting Name="Status500" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Internal Server Error</Value>
+    </Setting>
+    <Setting Name="Status501" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Implemented</Value>
+    </Setting>
+    <Setting Name="Status502" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Bad Gateway</Value>
+    </Setting>
+    <Setting Name="Status503" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Service Unavailable</Value>
+    </Setting>
+    <Setting Name="Status504" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Gateway Timeout</Value>
+    </Setting>
+    <Setting Name="Status505" Type="System.String" Scope="User">
+      <Value Profile="(Default)">HTTP Version Not Supported</Value>
+    </Setting>
+    <Setting Name="Status506" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Variant Also Negotiates</Value>
+    </Setting>
+    <Setting Name="Status507" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Insufficient Storage</Value>
+    </Setting>
+    <Setting Name="Status509" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Bandwidth Limit Exceeded</Value>
+    </Setting>
+    <Setting Name="Status510" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Extended</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
