@@ -11,24 +11,28 @@ namespace Flow
 {
 	public partial class Router : IDisposable
 	{
-		protected List<Listener> Listeners;
-		protected List<Predicate<Request>> Processors;
+		const int timeoutTime = 10000;
+
+		protected List<Listener> listeners;
+		protected List<Action<Request>> processors;
 		public PortList Ports { get; private set; }
-		protected EventWaitHandle Handle;
+		EventWaitHandle handle;
+		bool disposed;
+
 		public bool Running { get; private set; }
 
 		public Router(IEnumerable<int> ports)
 		{
-			Processors = new List<Predicate<Request>>();
+			processors = new List<Action<Request>>();
 			Ports = new PortList(ports);
 			Ports.PortAdded += new EventHandler<PortList.PortListEventArgs>(PortAdded);
 			Ports.PortRemoved += new EventHandler<PortList.PortListEventArgs>(PortRemoved);
 
-			Handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+			handle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-			Listeners =
+			listeners =
 				ports
-				.Select(port => new Listener(port, Handle, Processors))
+				.Select(port => new Listener(port, handle, processors))
 				.ToList();
 		}
 
@@ -44,49 +48,49 @@ namespace Flow
 
 		void PortRemoved(object sender, PortList.PortListEventArgs e)
 		{
-			Listeners.RemoveAll(listener => listener.Port == e.Port);
+			listeners.RemoveAll(listener => listener.Port == e.Port);
 		}
 
 		void PortAdded(object sender, PortList.PortListEventArgs e)
 		{
-			var listener = new Listener(e.Port, Handle, Processors);
-			Listeners.Add(listener);
+			var listener = new Listener(e.Port, handle, processors);
+			listeners.Add(listener);
 		}
 
 		public void Start()
 		{
-			foreach (var listener in Listeners) {
+			foreach (var listener in listeners) {
 				listener.TcpListener.Start();
 			}
-			Handle.Set();
+			handle.Set();
 			Running = true;
 		}
 
 		public void Stop()
 		{
-			foreach (var listener in Listeners) {
+			foreach (var listener in listeners) {
 				listener.TcpListener.Stop();
 			}
-			Handle.Reset();
+			handle.Reset();
 			Running = false;
 		}
 
-		public IDisposable Add(Predicate<Request> processor)
+		public IDisposable Add(Action<Request> processor)
 		{
-			Processors.Add(processor);
+			processors.Add(processor);
 			return new ProcessorDisposer(Remove, processor);
 		}
 
-		public void Remove(Predicate<Request> processor)
+		public void Remove(Action<Request> processor)
 		{
-			if (Processors.Contains(processor))
-				Processors.Remove(processor);
+			if (processors.Contains(processor))
+				processors.Remove(processor);
 		}
 
 		public void Dispose()
 		{
 			Stop();
-			foreach (var listener in Listeners) {
+			foreach (var listener in listeners) {
 				listener.Dispose();
 			}
 		}

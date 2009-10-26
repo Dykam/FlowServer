@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CustomHeaderBuilder.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="PortList.cs" />
     <Compile Include="ProcessorDisposer.cs" />
@@ -52,6 +51,7 @@
     </Compile>
     <Compile Include="Request.cs" />
     <Compile Include="HeaderBuilder.cs" />
+    <Compile Include="Rest\Rest.cs" />
     <Compile Include="Router.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />

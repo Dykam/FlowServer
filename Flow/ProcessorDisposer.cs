@@ -7,9 +7,9 @@ namespace Flow
 {
 	class ProcessorDisposer : IDisposable
 	{
-		Action<Predicate<Request>> detach;
-		Predicate<Request> processor;
-		public ProcessorDisposer(Action<Predicate<Request>> detach, Predicate<Request> processor)
+		Action<Action<Request>> detach;
+		Action<Request> processor;
+		public ProcessorDisposer(Action<Action<Request>> detach, Action<Request> processor)
 		{
 			this.detach = detach;
 			this.processor = processor;

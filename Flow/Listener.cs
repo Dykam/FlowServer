@@ -23,9 +23,9 @@ namespace Flow
 			public Queue<TcpClient> Clients;
 			public object ClientsLock;
 
-			IEnumerable<Predicate<Request>> Processors;
-			bool dispose;
-			public Listener(int port, EventWaitHandle handle, IEnumerable<Predicate<Request>> Processors)
+			IEnumerable<Action<Request>> Processors;
+			bool disposed;
+			public Listener(int port, EventWaitHandle handle, IEnumerable<Action<Request>> Processors)
 			{
 				Port = port;
 				TcpListener = new TcpListener(IPAddress.Any, port);
@@ -39,19 +39,15 @@ namespace Flow
 
 				Handle = handle;
 				HandleRequestHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-				dispose = false;
+				disposed = false;
 				this.Processors = Processors;
 				Thread.Start();
 				HandleRequestThread.Start();
 			}
 			void listen()
 			{
-				while (true) {
-					var signalled = Handle.WaitOne(timeoutTime);
-					if (dispose) {
-						return;
-					}
-					if (signalled) {
+				while (!disposed) {
+					if (Handle.WaitOne(timeoutTime)) {
 						var client = TcpListener.AcceptTcpClient();
 						lock (ClientsLock) {
 							Clients.Enqueue(client);
@@ -63,12 +59,8 @@ namespace Flow
 
 			void clientsHandler()
 			{
-				while (true) {
-					var signalled = HandleRequestHandle.WaitOne(timeoutTime);
-					if (dispose) {
-						return;
-					}
-					if (signalled) {
+				while (!disposed) {
+					if (HandleRequestHandle.WaitOne(timeoutTime)) {
 						while (true) {
 							TcpClient client;
 							lock (Clients) {
@@ -78,13 +70,17 @@ namespace Flow
 							var request = new Request(client, Port);
 							bool accepted = false;
 							foreach (var processor in Processors) {
-								if (processor(request)) {
-									accepted = true;
+								processor(request);
+								if(request.Accepted)
 									break;
-								}
 							}
-							if (!accepted) {
-								request.Respond("HTTP/1.1", 500, 0).Finish().Close();
+							if (!request.Accepted) {
+								request
+									.Accept()
+									.Respond("HTTP/1.1", 500)
+									.Finish()
+									.Dispose();
+								request.Dispose();
 							}
 						}
 					}
@@ -93,7 +89,7 @@ namespace Flow
 
 			public void Dispose()
 			{
-				dispose = true;
+				disposed = true;
 			}
 		}
 	}

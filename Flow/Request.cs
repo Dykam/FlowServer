@@ -10,12 +10,14 @@ namespace Flow
 {
 	public class Request : IDisposable
 	{
-		TcpClient client;
+		const string defaultHtppVersion = "HTTP/1.1";
+
 		NetworkStream stream;
 		ReadOnlyNetworkStream body;
 		TextReader reader;
 		LinkedList<string> lines;
 		bool disposed;
+		String httpVersion;
 		HeaderBuilder response;
 
 		static Regex firstLineParser;
@@ -30,7 +32,13 @@ namespace Flow
 		public string Method { get; private set; }
 		public string Path { get; private set; }
 		public string Version { get; private set; }
+
 		public int Port { get; private set; }
+		public TcpClient Client { get; private set; }
+
+		public Func<int, string> GetStatusMessage { get; set; }
+
+		public bool Accepted { get; private set; }
 
 		public IEnumerable<string> Lines { get; private set; }
 		public IEnumerable<string> HeaderLines { get; private set; }
@@ -38,12 +46,13 @@ namespace Flow
 
 		public bool HeadersCompleted { get { return body != null; } }
 
-		public Request(TcpClient newClient, int port, Func<int, string> statusMessageFetcher)
+		public Request(TcpClient newClient, int port, Func<int, string> statusMessageFetcher, string httpVersion)
 		{
 			GetStatusMessage = statusMessageFetcher;
+			this.httpVersion = httpVersion;
 
-			client = newClient;
-			stream = client.GetStream();
+			Client = newClient;
+			stream = Client.GetStream();
 			reader = (TextReader)new StreamReader(stream);
 			Port = port;
 
@@ -52,51 +61,79 @@ namespace Flow
 			Lines = lines;
 			HeaderLines = lines.TakeWhile(line => line != "\n");
 			Headers =
-				HeaderLines
-				.Select(line =>
-				{
-					var parts = line.Split(new[] { ':' }, 2);
-					if (parts.Length == 2) {
-						return new KeyValuePair<string, string>(parts[0], parts[1]);
-					}
-					return default(KeyValuePair<string, string>);
-				});
+				from line in HeaderLines
+				let parts = line.Split(new[] { ':' }, 2)
+				where parts.Length == 2
+				select new KeyValuePair<string, string>(parts[0], parts[1]);
 
-			var firstLine = FirstLineParser.Match(reader.ReadLine());
-			Method = firstLine.Groups["Method"].ToString();
-			Path = firstLine.Groups["Path"].ToString();
-			Version = firstLine.Groups["Version"].ToString();
+			string firstLine = reader.ReadLine();
+			if (!string.IsNullOrEmpty(firstLine)) {
+				var firstLineMatch = FirstLineParser.Match(firstLine);
+				Method = firstLineMatch.Groups["Method"].ToString();
+				Path = firstLineMatch.Groups["Path"].ToString();
+				Version = firstLineMatch.Groups["Version"].ToString();
+			}
+		}
+		public Request(TcpClient newClient, int port, Func<int, string> statusMessageFetcher)
+			: this(newClient, port, statusMessageFetcher, defaultHtppVersion)
+		{
+		}
+		public Request(TcpClient newClient, int port, string httpVersion)
+			: this(newClient, port, status => (String)Properties.Settings.Default["Status" + status.ToString()], httpVersion)
+		{
 		}
 
 		public Request(TcpClient newClient, int port)
-			: this(newClient, port, status => (String)Properties.Settings.Default["Status" + status.ToString()])
+			: this(newClient, port, defaultHtppVersion)
 		{
 		}
 
-		public HeaderBuilder Respond(string version, int status, string statusMessage, long contentLength)
+		public Request Accept()
 		{
+			Accepted = true;
+			return this;
+		}
+
+		public HeaderBuilder Respond(string version, int status, string statusMessage)
+		{
+			if (!Accepted)
+				throw new Exception("You need to accept the request first.");
 			if (response != null)
 				throw new Exception("You cannot instantiate a response twice or more times.");
 			var writer = (TextWriter)new StreamWriter(stream);
 			writer.WriteLine("{0} {1} {2}", version, status, statusMessage);
 			writer.Flush();
 			response = new HeaderBuilder(new WriteOnlyStreamWrapper(stream));
-			response.ContentLength = contentLength;
 			return response;
 		}
-		public HeaderBuilder Respond(string version, int status, long contentLength)
+		public HeaderBuilder Respond(string version, int status)
 		{
-			return Respond(version, status, GetStatusMessage(status), contentLength);
+			if (!Accepted)
+				throw new Exception("You need to accept the request first.");
+			return Respond(version, status, GetStatusMessage(status));
+		}
+		public HeaderBuilder Respond(int status)
+		{
+			return Respond(httpVersion, status);
+		}
+		public HeaderBuilder Respond(int status, string statusMessage)
+		{
+			return Respond(httpVersion, status, statusMessage);
 		}
 
-		public void CompleteHeaders()
+		public Request CompleteHeaders()
 		{
+			if (!Accepted)
+				throw new Exception("You need to accept the request first.");
 			while (FetchHeader()) ;
 			body = new ReadOnlyNetworkStream(stream);
+			return this;
 		}
 
 		public bool FetchHeader()
 		{
+			if (!Accepted)
+				throw new Exception("You need to accept the request first.");
 			if (!HeadersCompleted) {
 				var line = reader.ReadLine();
 				if (String.IsNullOrEmpty(line)) {
@@ -112,6 +149,8 @@ namespace Flow
 		{
 			get
 			{
+				if (!Accepted)
+					throw new Exception("You need to accept the request first.");
 				if (body == null) CompleteHeaders();
 				return body;
 			}
@@ -119,14 +158,14 @@ namespace Flow
 
 		public void Dispose()
 		{
+			if (!Accepted)
+				throw new Exception("You need to accept the request first.");
 			if (!disposed) {
 				if (stream != null) stream.Dispose();
-				if (client != null) client.Close();
+				if (Client != null) Client.Close();
 				if(response != null) response.Dispose();
 				disposed = true;
 			}
 		}
-
-		public static Func<int, string> GetStatusMessage { get; set; }
 	}
 }

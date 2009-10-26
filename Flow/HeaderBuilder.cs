@@ -13,27 +13,52 @@ namespace Flow
 
 		public bool Finished { get; private set; }
 
-		public long ContentLength { get; set; }
-
-		public CustomHeaderBuilder Custom { get; private set; }
-
 		internal HeaderBuilder(Stream target)
 		{
 			this.Target = target;
 			Writer = (TextWriter)new StreamWriter(target);
-			Custom = new CustomHeaderBuilder(this);
+		}
+
+		public HeaderBuilder Add(string key, string value)
+		{
+			if (Finished)
+				throw new Exception("Headers cannot be changed after ending.");
+			Writer.WriteLine("{0}: {1}", key, value);
+			Writer.Flush();
+			return this;
+		}
+
+		public HeaderBuilder Add(IEnumerable<KeyValuePair<string, string>> headers)
+		{
+			if (Finished)
+				throw new Exception("Headers cannot be changed after ending.");
+			foreach (var header in headers) {
+				Add(headers);
+			}
+			return this;
+		}
+
+		public HeaderBuilder Add(KeyValuePair<string, string> header)
+		{
+			if (Finished)
+				throw new Exception("Headers cannot be changed after ending.");
+			return Add(header.Key, header.Value);
+		}
+
+		public HeaderBuilder Flush()
+		{
+			if (Finished)
+				throw new Exception("Headers cannot be changed after ending.");
+			Writer.Flush();
+			return this;
 		}
 
 		public Stream Finish()
 		{
 			if (Finished)
 				throw new Exception("Headers cannot be changed after ending.");
-
-			Custom.Flush();
-
-			Writer.WriteLine("Content-Length: " + ContentLength.ToString());
 			Writer.WriteLine();
-			Writer.Flush();
+			Flush();
 			Finished = true;
 			return Target;
 		}
