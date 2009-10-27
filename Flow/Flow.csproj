@@ -49,9 +49,9 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="ReadOnlyDictionary.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="HeaderBuilder.cs" />
-    <Compile Include="Rest\Rest.cs" />
     <Compile Include="Router.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />
@@ -63,6 +63,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Rest\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

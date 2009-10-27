@@ -21,8 +21,7 @@ namespace Flow
 				using (
 					var responseStream =
 						request
-						.Accept()
-						.Respond(200)
+						.Accept(200)
 						.Add("Content-Type", mimeFetcher(absolutePath))
 						.Add("Content-Lenght", fileStream.Length.ToString())
 						.Finish()) {
@@ -38,7 +37,7 @@ namespace Flow
 				}
 			}
 			catch (FileNotFoundException) {
-				request.Respond(404).Finish().Close();
+				request.Accept(404).Finish().Close();
 			}
 		}
 
@@ -55,7 +54,6 @@ namespace Flow
 			router.Add(request =>
 			{
 				request
-					.Accept()
 					.StreamFile(predicate, absolutePathFetcher, mimeFetcher);
 			});
 		}
@@ -67,17 +65,14 @@ namespace Flow
 			AddFileStreamer(router, predicate, getAbsoluteFilePath, mimeFetcher);
 		}
 
-		public static void StreamText(this Request request,
-			Predicate<String> predicate,
-			string text, string mime, Encoding encoding)
+		public static void StreamText(this Request request,	Predicate<String> predicate, string text, string mime, Encoding encoding)
 		{
 			if(!predicate(request.Path)) return;
 
 			var bytes = encoding.GetBytes(text);
 			var response =
 					request
-					.Accept()
-					.Respond(200)
+					.Accept(200)
 					.Add("Content-Type", mime)
 					.Add("Content-Length", bytes.Length.ToString())
 					.Finish();
@@ -87,14 +82,67 @@ namespace Flow
 			}
 		}
 
+		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text, string mime, Encoding encoding)
+		{
+			StreamText(request, predicate, text(request), mime, encoding);
+		}
+
 		public static void StreamText(this Request request,	Predicate<String> predicate, string text, string mime)
 		{
 			StreamText(request, predicate, text, mime, Encoding.UTF8);
 		}
 
+		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text, string mime)
+		{
+			StreamText(request, predicate, text(request), mime, Encoding.UTF8);
+		}
+
 		public static void StreamText(this Request request, Predicate<String> predicate, string text)
 		{
 			StreamText(request, predicate, text, "text/plain");
+		}
+
+		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text)
+		{
+			StreamText(request, predicate, text(request), "text/plain");
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text, string mime, Encoding encoding)
+		{
+			router.Add(request =>
+			{
+				request
+					.StreamText(predicate, text, mime, encoding);
+			});
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text, string mime)
+		{
+			AddTextStreamer(router, predicate, text, mime, Encoding.UTF8);
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text)
+		{
+			AddTextStreamer(router, predicate, text, "text/plain", Encoding.UTF8);
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text, string mime, Encoding encoding)
+		{
+			router.Add(request =>
+			{
+				request
+					.StreamText(predicate, text(request), mime, encoding);
+			});
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text, string mime)
+		{
+			AddTextStreamer(router, predicate, text, mime, Encoding.UTF8);
+		}
+
+		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text)
+		{
+			AddTextStreamer(router, predicate, text, "text/plain", Encoding.UTF8);
 		}
 
 		static string getAbsoluteFilePath(string relative)

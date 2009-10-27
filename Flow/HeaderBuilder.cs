@@ -22,7 +22,7 @@ namespace Flow
 		public HeaderBuilder Add(string key, string value)
 		{
 			if (Finished)
-				throw new Exception("Headers cannot be changed after ending.");
+				throw finishedException;
 			Writer.WriteLine("{0}: {1}", key, value);
 			Writer.Flush();
 			return this;
@@ -31,7 +31,7 @@ namespace Flow
 		public HeaderBuilder Add(IEnumerable<KeyValuePair<string, string>> headers)
 		{
 			if (Finished)
-				throw new Exception("Headers cannot be changed after ending.");
+				throw finishedException;
 			foreach (var header in headers) {
 				Add(headers);
 			}
@@ -41,14 +41,14 @@ namespace Flow
 		public HeaderBuilder Add(KeyValuePair<string, string> header)
 		{
 			if (Finished)
-				throw new Exception("Headers cannot be changed after ending.");
+				throw finishedException;
 			return Add(header.Key, header.Value);
 		}
 
 		public HeaderBuilder Flush()
 		{
 			if (Finished)
-				throw new Exception("Headers cannot be changed after ending.");
+				throw finishedException;
 			Writer.Flush();
 			return this;
 		}
@@ -56,7 +56,7 @@ namespace Flow
 		public Stream Finish()
 		{
 			if (Finished)
-				throw new Exception("Headers cannot be changed after ending.");
+				throw finishedException;
 			Writer.WriteLine();
 			Flush();
 			Finished = true;
@@ -66,6 +66,14 @@ namespace Flow
 		public void Dispose()
 		{
 			if (!Finished) Finish();
+		}
+
+		Exception finishedException
+		{
+			get
+			{
+				return new Exception("Headers are already written.");
+			}
 		}
 	}
 }
