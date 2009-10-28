@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SmartDictionary.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="PortList.cs" />
     <Compile Include="ProcessorDisposer.cs" />
@@ -49,13 +50,14 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="ReadOnlyDictionary.cs" />
+    <Compile Include="ReadOnlySmartDictionary.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="HeaderBuilder.cs" />
     <Compile Include="Router.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />
     <Compile Include="DefaultResponses.cs" />
+    <Compile Include="Tuple.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -32,7 +32,7 @@ namespace Flow
 
 			listeners =
 				ports
-				.Select(port => new Listener(port, handle, processors))
+				.Select(port => new Listener(this, port, handle, processors))
 				.ToList();
 		}
 
@@ -53,7 +53,7 @@ namespace Flow
 
 		void PortAdded(object sender, PortList.PortListEventArgs e)
 		{
-			var listener = new Listener(e.Port, handle, processors);
+			var listener = new Listener(this, e.Port, handle, processors);
 			listeners.Add(listener);
 		}
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Linq;
 
 namespace Flow.FileServer
 {
@@ -8,8 +9,8 @@ namespace Flow.FileServer
 		static void Main(string[] args)
 		{
 			var router = new Router();
-			var counter = 0;
-			var random = new Random();
+			router
+				.AddTextStreamer(_ => true, "Foo");
 			router.Start();
 		}
 

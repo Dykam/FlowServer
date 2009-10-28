@@ -9,150 +9,124 @@ namespace Flow
 	public static class DefaultResponses
 	{
 		const int BufferSize = 4096;
-		const int CharBufferSize = 2048;
-		public static void StreamFile(this Request request,
-			Predicate<String> predicate,
-			Func<string, string> absolutePathFetcher, Func<string, string> mimeFetcher)
+		public static void StreamFile(this HeaderBuilder response, string file, string mime)
 		{
-			if(!predicate(request.Path)) return;
-			try {
-				string absolutePath = absolutePathFetcher(request.Path);
-				using (FileStream fileStream = File.OpenRead(absolutePath))
-				using (
-					var responseStream =
-						request
-						.Accept(200)
-						.Add("Content-Type", mimeFetcher(absolutePath))
-						.Add("Content-Lenght", fileStream.Length.ToString())
-						.Finish()) {
+			using (FileStream fileStream = File.OpenRead(file)) {
+				var responseStream =
+					response
+					.Add("Content-Type", mime)
+					.Add("Content-Lenght", fileStream.Length.ToString())
+					.Finish();
+				using (responseStream) {
 					var buffer = new Byte[BufferSize];
-					try {
-						int bytesRead = 0;
-						do {
-							bytesRead = fileStream.Read(buffer, 0, buffer.Length);
-							responseStream.Write(buffer, 0, bytesRead);
-						} while (bytesRead != 0 && request.Client.Connected);
+					int bytesRead = -1;
+					while (bytesRead != 0 && responseStream.CanWrite && fileStream.CanRead) {
+						bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+						responseStream.Write(buffer, 0, bytesRead);
 					}
-					catch (Exception) { }
 				}
 			}
-			catch (FileNotFoundException) {
-				request.Accept(404).Finish().Close();
-			}
 		}
 
-		public static void StreamFile(this Request request, Predicate<String> predicate, Func<string, string> mimeFetcher)
-		{
-			StreamFile(request, predicate, getAbsoluteFilePath, mimeFetcher);
-		}
-
-		public static void AddFileStreamer(this Router router,
-			Predicate<String> predicate,
-			Func<string, string> absolutePathFetcher,
-			Func<string, string> mimeFetcher)
+		public static Router AddFileStreamer(this Router router,
+			Predicate<Request> predicate,
+			Func<Request, FileProperties> fetcher)
 		{
 			router.Add(request =>
 			{
-				request
-					.StreamFile(predicate, absolutePathFetcher, mimeFetcher);
-			});
-		}
-
-		public static void AddFileStreamer(this Router router,
-			Predicate<String> predicate,
-			Func<string, string> mimeFetcher)
-		{
-			AddFileStreamer(router, predicate, getAbsoluteFilePath, mimeFetcher);
-		}
-
-		public static void StreamText(this Request request,	Predicate<String> predicate, string text, string mime, Encoding encoding)
-		{
-			if(!predicate(request.Path)) return;
-
-			var bytes = encoding.GetBytes(text);
-			var response =
+				if (predicate(request)) {
+					var props = fetcher(request);
 					request
-					.Accept(200)
+						.Accept(200)
+						.StreamFile(props.Path, props.Mime);
+				}
+			});
+			return router;
+		}
+
+		public static void StreamText(this HeaderBuilder response, string text, string mime, Encoding encoding)
+		{
+			var bytes = encoding.GetBytes(text);
+			var responseStream = 
+					response
 					.Add("Content-Type", mime)
 					.Add("Content-Length", bytes.Length.ToString())
 					.Finish();
-			using(response)
+			using (responseStream)
 			{
-				response.Write(bytes, 0, bytes.Length);
+				responseStream.Write(bytes, 0, bytes.Length);
 			}
 		}
 
-		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text, string mime, Encoding encoding)
+		public static void StreamText(this HeaderBuilder response, string text, string mime)
 		{
-			StreamText(request, predicate, text(request), mime, encoding);
+			StreamText(response, text, mime, Encoding.UTF8);
 		}
 
-		public static void StreamText(this Request request,	Predicate<String> predicate, string text, string mime)
+		public static void StreamText(this HeaderBuilder response, string text)
 		{
-			StreamText(request, predicate, text, mime, Encoding.UTF8);
+			StreamText(response, text, "text/plain");
 		}
 
-		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text, string mime)
-		{
-			StreamText(request, predicate, text(request), mime, Encoding.UTF8);
-		}
-
-		public static void StreamText(this Request request, Predicate<String> predicate, string text)
-		{
-			StreamText(request, predicate, text, "text/plain");
-		}
-
-		public static void StreamText(this Request request, Predicate<String> predicate, Func<Request, string> text)
-		{
-			StreamText(request, predicate, text(request), "text/plain");
-		}
-
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text, string mime, Encoding encoding)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, string text, string mime, Encoding encoding)
 		{
 			router.Add(request =>
 			{
-				request
-					.StreamText(predicate, text, mime, encoding);
+				if(predicate(request)) {
+					request
+						.Accept(200)
+						.StreamText(text, mime, encoding);
+				}
 			});
+			return router;
 		}
 
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text, string mime)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, string text, string mime)
 		{
 			AddTextStreamer(router, predicate, text, mime, Encoding.UTF8);
+			return router;
 		}
 
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, string text)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, string text)
 		{
 			AddTextStreamer(router, predicate, text, "text/plain", Encoding.UTF8);
+			return router;
 		}
 
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text, string mime, Encoding encoding)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, Func<Request, string> text, string mime, Encoding encoding)
 		{
 			router.Add(request =>
 			{
-				request
-					.StreamText(predicate, text(request), mime, encoding);
+				if (predicate(request)) {
+					request
+						.Accept(200)
+						.StreamText(text(request), mime, encoding);
+				}
 			});
+			return router;
 		}
 
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text, string mime)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, Func<Request, string> text, string mime)
 		{
 			AddTextStreamer(router, predicate, text, mime, Encoding.UTF8);
+			return router;
 		}
 
-		public static void AddTextStreamer(this Router router, Predicate<String> predicate, Func<Request, string> text)
+		public static Router AddTextStreamer(this Router router, Predicate<Request> predicate, Func<Request, string> text)
 		{
 			AddTextStreamer(router, predicate, text, "text/plain", Encoding.UTF8);
+			return router;
 		}
 
-		static string getAbsoluteFilePath(string relative)
+		public class FileProperties
 		{
-			if (Path.DirectorySeparatorChar != '/')
-				relative = relative.Replace('/', Path.DirectorySeparatorChar);
-			if (!relative.StartsWith("\\"))
-				relative = "\\" + relative;
-			var absolute = Environment.CurrentDirectory + relative;
-			return absolute;
+			public string Mime { get; private set; }
+			public string Path { get; private set; }
+			public FileProperties(string mine, string path)
+			{
+				Mime = Mime;
+				Path = path;
+			}
 		}
 	}
 }

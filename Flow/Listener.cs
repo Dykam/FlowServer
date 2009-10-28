@@ -22,12 +22,14 @@ namespace Flow
 			public EventWaitHandle HandleRequestHandle;
 			public Queue<TcpClient> Clients;
 			public object ClientsLock;
+			public Router @Router;
 
 			IEnumerable<Action<Request>> Processors;
 			bool disposed;
-			public Listener(int port, EventWaitHandle handle, IEnumerable<Action<Request>> Processors)
+			public Listener(Router router, int port, EventWaitHandle handle, IEnumerable<Action<Request>> Processors)
 			{
 				Port = port;
+				@Router = router;
 				TcpListener = new TcpListener(IPAddress.Any, port);
 				Thread = new Thread(listen);
 				Thread.Name = "ListenerThread Port " + Port.ToString();
@@ -67,24 +69,19 @@ namespace Flow
 								if (Clients.Count == 0) break;
 								client = Clients.Dequeue();
 							}
-							try {
-								var request = new Request(client, Port);
-								bool accepted = false;
-								foreach (var processor in Processors) {
-									processor(request);
-									if (request.Accepted)
-										break;
-								}
-								if (!request.Accepted) {
-									request
-										.Accept(500)
-										.Finish()
-										.Dispose();
-									request.Dispose();
-								}
+							var request = new Request(@Router, client, Port);
+							int i = 0;
+							foreach (var processor in Processors) {
+								processor(request);
+								if (request.Accepted)
+									break;
 							}
-							catch {
-								continue;
+							if (!request.Accepted) {
+								request
+									.Accept(500)
+									.Finish()
+									.Dispose();
+								request.Dispose();
 							}
 						}
 					}
