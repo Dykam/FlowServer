@@ -40,6 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Basic\TextResponse.cs" />
+    <Compile Include="RequestInfo.cs" />
+    <Compile Include="Responder.cs" />
+    <Compile Include="ResponderAdder.cs" />
     <Compile Include="SmartDictionary.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="PortList.cs" />
@@ -56,7 +60,7 @@
     <Compile Include="Router.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />
-    <Compile Include="DefaultResponses.cs" />
+    <Compile Include="Basic\FileResponse.cs" />
     <Compile Include="Tuple.cs" />
   </ItemGroup>
   <ItemGroup>

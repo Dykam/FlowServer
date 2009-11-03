@@ -24,9 +24,10 @@ namespace Flow
 			public object ClientsLock;
 			public Router @Router;
 
-			IEnumerable<Action<Request>> Processors;
+			IEnumerable<Responder> Processors;
+
 			bool disposed;
-			public Listener(Router router, int port, EventWaitHandle handle, IEnumerable<Action<Request>> Processors)
+			public Listener(Router router, int port, EventWaitHandle handle, IEnumerable<Responder> processors)
 			{
 				Port = port;
 				@Router = router;
@@ -42,7 +43,7 @@ namespace Flow
 				Handle = handle;
 				HandleRequestHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
 				disposed = false;
-				this.Processors = Processors;
+				Processors = processors;
 				Thread.Start();
 				HandleRequestThread.Start();
 			}
@@ -70,15 +71,16 @@ namespace Flow
 								client = Clients.Dequeue();
 							}
 							var request = new Request(@Router, client, Port);
-							int i = 0;
+							bool accepted = false;
 							foreach (var processor in Processors) {
-								processor(request);
-								if (request.Accepted)
+								accepted = processor.Respond(request);
+								if(accepted)
 									break;
 							}
-							if (!request.Accepted) {
+
+							if (!accepted) {
 								request
-									.Accept(500)
+									.Respond(500)
 									.Finish()
 									.Dispose();
 								request.Dispose();

@@ -14,7 +14,8 @@ namespace Flow
 		const int timeoutTime = 10000;
 
 		protected List<Listener> listeners;
-		protected List<Action<Request>> processors;
+		protected List<Responder> processors;
+
 		public PortList Ports { get; private set; }
 		EventWaitHandle handle;
 		bool disposed;
@@ -23,7 +24,7 @@ namespace Flow
 
 		public Router(IEnumerable<int> ports)
 		{
-			processors = new List<Action<Request>>();
+			processors = new List<Responder>();
 			Ports = new PortList(ports);
 			Ports.PortAdded += new EventHandler<PortList.PortListEventArgs>(PortAdded);
 			Ports.PortRemoved += new EventHandler<PortList.PortListEventArgs>(PortRemoved);
@@ -75,16 +76,9 @@ namespace Flow
 			Running = false;
 		}
 
-		public IDisposable Add(Action<Request> processor)
+		public ResponderAdder If(Predicate<Request> condition)
 		{
-			processors.Add(processor);
-			return new ProcessorDisposer(Remove, processor);
-		}
-
-		public void Remove(Action<Request> processor)
-		{
-			if (processors.Contains(processor))
-				processors.Remove(processor);
+			return new ResponderAdder(this, condition);
 		}
 
 		public void Dispose()
