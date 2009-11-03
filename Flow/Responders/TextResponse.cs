@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Flow.Default
+namespace Flow.Responders
 {
 	public static class TextResponse
 	{

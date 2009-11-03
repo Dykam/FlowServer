@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Basic\TextResponse.cs" />
+    <Compile Include="Responders\TextResponse.cs" />
     <Compile Include="RequestInfo.cs" />
     <Compile Include="Responder.cs" />
     <Compile Include="ResponderAdder.cs" />
@@ -60,7 +60,7 @@
     <Compile Include="Router.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />
-    <Compile Include="Basic\FileResponse.cs" />
+    <Compile Include="Responders\FileResponse.cs" />
     <Compile Include="Tuple.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -71,7 +71,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Rest\" />
+    <Folder Include="Conditions\" />
+    <Folder Include="Handlers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
