@@ -5,6 +5,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.IO;
 using System.Text.RegularExpressions;
+using Flow.Handlers;
 
 namespace Flow
 {
@@ -22,7 +23,7 @@ namespace Flow
 
 		protected static readonly Regex firstLineParser = new Regex("^(?<Method>[A-Za-z]+) (?<Path>.*) (?<Version>[^ ]+)$", RegexOptions.Compiled);
 
-		public string Method { get; private set; }
+		public RequestMethod Method { get; private set; }
 		public string Path { get; private set; }
 		public string Version { get; private set; }
 		public ReadOnlySmartDictionary<String, String> Headers { get; private set; }

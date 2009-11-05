@@ -7,21 +7,30 @@ namespace Flow.Handlers
 {
 	public static class Rest
 	{
-		public static void AddRest<T1, T2, T3, T4>(this Router router, Action<T1, T2, T3, T4> responder)
+		public static Router AddRest<T1, T2, T3>(this Router router, Action<Request, T1, T2, T3> responder)
 		{
-			var attributes = responder.fetchAttributes();
+			router.add(responder);
+			return router;	
 		}
-		public static void AddRest<T1, T2, T3>(this Router router, Action<T1, T2, T3> responder)
+		public static Router AddRest<T1, T2>(this Router router, Action<Request, T1, T2> responder)
 		{
-			var attributes = responder.fetchAttributes();
+			router.add(responder);
+			return router;
 		}
-		public static void AddRest<T1, T2>(this Router router, Action<T1, T2> responder)
+		public static Router AddRest<T1>(this Router router, Action<Request, T1> responder)
 		{
-			var attributes = responder.fetchAttributes();
+			router.add(responder);
+			return router;
 		}
-		public static void AddRest<T1>(this Router router, Action<T1> responder)
+		public static Router AddRest(this Router router, Delegate responder)
 		{
-			var attributes = responder.fetchAttributes();
+			router.add(responder);
+			return router;
+		}
+
+		static void add(this Router router, Delegate responder)
+		{
+
 		}
 
 		static IEnumerable<RestMethodAttribute> fetchAttributes(this Delegate responder)
@@ -31,7 +40,7 @@ namespace Flow.Handlers
 	}
 
 	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-	sealed class RestMethodAttribute : Attribute
+	public sealed class RestMethodAttribute : Attribute
 	{
 		public RestMethodAttribute()
 		{
@@ -79,9 +88,7 @@ namespace Flow.Handlers
 
 		public static implicit operator RequestMethod[](RequestMethod method)
 		{
-			return new[] {
-				method
-			};
+			return new[] { method };
 		}
 
 		public static bool operator ==(RequestMethod a, RequestMethod b)

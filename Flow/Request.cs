@@ -12,9 +12,12 @@ namespace Flow
 	{
 		public bool Used { get; private set; }
 
+		public ReadOnlyNetworkStream Body { get; private set; }
+
 		internal Request(Router router, TcpClient newClient, int port, Func<int, string> statusMessageFetcher, string httpVersion)
 			: base(router, newClient, port, statusMessageFetcher, httpVersion)
-		{			
+		{
+			body = new ReadOnlyNetworkStream(newClient.GetStream());
 		}
 		internal Request(Router router, TcpClient newClient, int port, Func<int, string> statusMessageFetcher)
 			: this(router, newClient, port, statusMessageFetcher, defaultHtppVersion)
