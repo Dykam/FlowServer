@@ -70,20 +70,24 @@ namespace Flow
 								if (Clients.Count == 0) break;
 								client = Clients.Dequeue();
 							}
-							var request = new Request(@Router, client, Port);
-							bool accepted = false;
-							foreach (var processor in Processors) {
-								accepted = processor.Respond(request);
-								if(accepted)
-									break;
-							}
+							try {
+								var request = new Request(@Router, client, Port);
+								bool accepted = false;
+								foreach (var processor in Processors) {
+									accepted = processor.Respond(request);
+									if (accepted)
+										break;
+								}
 
-							if (!accepted) {
-								request
-									.Respond(500)
-									.Finish()
-									.Dispose();
-								request.Dispose();
+								if (!accepted) {
+									request
+										.Respond(500)
+										.Finish()
+										.Dispose();
+									request.Dispose();
+								}
+							}
+							catch {
 							}
 						}
 					}

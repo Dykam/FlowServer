@@ -16,6 +16,7 @@ namespace Flow.FileServer
 				.RespondWith(request =>
 				{
 					var address = (IPEndPoint)request.Client.Client.RemoteEndPoint;
+					Console.WriteLine(address);
 					request
 						.Respond(200)
 						.StreamText(String.Format("It works! Oh, and I know your IP, I think it is this one: {0}", address));

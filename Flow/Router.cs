@@ -67,7 +67,7 @@ namespace Flow
 			Running = true;
 		}
 
-		public void Stop()
+		public void Pause()
 		{
 			foreach (var listener in listeners) {
 				listener.TcpListener.Stop();
@@ -83,7 +83,7 @@ namespace Flow
 
 		public void Dispose()
 		{
-			Stop();
+			Pause();
 			foreach (var listener in listeners) {
 				listener.Dispose();
 			}
