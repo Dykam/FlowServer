@@ -17,20 +17,20 @@ namespace Flow.FileServer
 			pads = new Dictionary<int,string>();
 			var router = new Router();
 			router
-				.AddRest(getNotepadItem)
-				.AddRest(putNotepadItem)
-				.AddRest(getNotepad)
-				.AddRest(postNotepad);
+				.AddRest<string, int>(getNotepadItem)
+				.AddRest<string, int>(putNotepadItem)
+				.AddRest<string>(getNotepad)
+				.AddRest<string>(postNotepad);
 			router.Start();
 		}
 
-		[RestMethod(Method = RequestMethod.Get, Path = "/notepad/[0-9]+")]
+		[RestMethod(Method = RequestMethods.Get, Pattern = "/notepad/[0-9]+")]
 		static void getNotepadItem(Request request, string beNotepad, int nr)
 		{
 			string text;
 			int status = 200;
 			lock (pads) {
-				if (!pads.TryGetValue(nr, text)) {
+				if (!pads.TryGetValue(nr, out text)) {
 					status = 404;
 				}
 			}
@@ -42,7 +42,7 @@ namespace Flow.FileServer
 				.StreamText(text);
 		}
 
-		[RestMethod(Method = RequestMethod.Put, Path = "/notepad/[0-9]+")]
+		[RestMethod(Method = RequestMethods.Put, Pattern = "/notepad/[0-9]+")]
 		static void putNotepadItem(Request request, string beNotepad, int nr)
 		{
 			var text = ((TextReader)new StreamReader(request.Body)).ReadToEnd();
@@ -61,7 +61,7 @@ namespace Flow.FileServer
 			request.Respond(200).Finish().Dispose();
 		}
 
-		[RestMethod(Method = RequestMethod.Get, Path = "/notepad/")]
+		[RestMethod(Method = RequestMethods.Get, Pattern = "/notepad/")]
 		static void getNotepad(Request request, string beNotepad)
 		{
 			string text;
@@ -80,7 +80,7 @@ namespace Flow.FileServer
 				.StreamText(string.Format("<html><head><title>{0} found</title></head><body><ul>{1}</ul></body></html>", length, text), "text/html");
 		}
 
-		[RestMethod(Method = RequestMethod.Post, Path = "/notepad/")]
+		[RestMethod(Method = RequestMethods.Post, Pattern = "/notepad/")]
 		static void postNotepad(Request request, string beNotepad)
 		{
 			var text = ((TextReader)new StreamReader(request.Body)).ReadToEnd();

@@ -23,7 +23,8 @@ namespace Flow
 
 		protected static readonly Regex firstLineParser = new Regex("^(?<Method>[A-Za-z]+) (?<Path>.*) (?<Version>[^ ]+)$", RegexOptions.Compiled);
 
-		public RequestMethod Method { get; private set; }
+		RequestMethods method;
+		public RequestMethods Method { get { return method; } }
 		public string Path { get; private set; }
 		public string Version { get; private set; }
 		public ReadOnlySmartDictionary<String, String> Headers { get; private set; }
@@ -111,7 +112,10 @@ namespace Flow
 			} while (firstLine == "\n" || firstLine == "\r\n" || firstLine == "\r");
 			if (!string.IsNullOrEmpty(firstLine)) {
 				var firstLineMatch = firstLineParser.Match(firstLine);
-				Method = firstLineMatch.Groups["Method"].ToString();
+				var method = firstLineMatch.Groups["Method"].ToString();
+				if (enumTryParse(method, out this.method)) {
+					this.method = RequestMethods.None;
+				}
 				Path = firstLineMatch.Groups["Path"].ToString();
 				Path = Uri.UnescapeDataString(Path);
 				Version = firstLineMatch.Groups["Version"].ToString();
@@ -126,6 +130,24 @@ namespace Flow
 				if (Client != null) Client.Close();
 				if (response != null) response.Dispose();
 				disposed = true;
+			}
+		}
+
+		public static bool enumTryParse<T>(string strType, out T result)
+		{
+			string strTypeFixed = strType.Replace(' ', '_');
+			if (Enum.IsDefined(typeof(T), strTypeFixed)) {
+				result = (T)Enum.Parse(typeof(T), strTypeFixed, true);
+				return true;
+			} else {
+				foreach (string value in Enum.GetNames(typeof(T))) {
+					if (value.Equals(strTypeFixed, StringComparison.OrdinalIgnoreCase)) {
+						result = (T)Enum.Parse(typeof(T), value);
+						return true;
+					}
+				}
+				result = default(T);
+				return false;
 			}
 		}
 	}

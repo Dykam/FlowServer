@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Flow.Handlers
 {
@@ -30,12 +32,67 @@ namespace Flow.Handlers
 
 		static void add(this Router router, Delegate responder)
 		{
-
+			foreach (var method in responder.GetInvocationList().Select(del => del.Method)) {
+				var attributes = method.fetchAttributes();
+				IEnumerator<RestMethodAttribute> enumer = attributes.GetEnumerator();
+				var regexes = new List<Regex>();
+				if (!enumer.MoveNext()) {
+					regexes.Add(method.fetchPathMatcher());
+				} else {
+					do {
+						var regex = enumer.Current.Pattern.Replace("/", ")/(");
+						if (regex.EndsWith("("))
+							regex = regex.Substring(0, regex.Length - 1);
+						if (regex.StartsWith(")"))
+							regex = regex.Substring(1);
+					} while (enumer.MoveNext());
+				}
+			}
 		}
 
-		static IEnumerable<RestMethodAttribute> fetchAttributes(this Delegate responder)
+		static Regex fetchPathMatcher(this MethodInfo responder)
 		{
-			return responder.Method.GetCustomAttributes(typeof(RestMethodAttribute), true).Cast<RestMethodAttribute>();
+			var parts =
+				responder
+				.GetParameters()
+				.Select(param => (param.DefaultValue ?? param.fetchPartMatcher()).ToString());
+				
+			var builder =
+				parts
+				.Aggregate(new StringBuilder("/("), (b, s) => b.Append(s).Append(")/("));
+
+			return
+				new Regex(
+					builder
+					.Remove(builder.Length - 2, 2)
+					.ToString()
+				);
+		}
+
+		static string fetchPartMatcher(this ParameterInfo info)
+		{
+			switch (info.ParameterType) {
+				case typeof(int):
+					return "-?[0-9]{1, 21}";
+				case typeof(uint):
+					return "[0-9]{1, 22}";
+				case typeof(long):
+					return "-?[0-9]{1, 43}";
+				case typeof(ulong):
+					return "[0-9]{1, 44}";
+				case typeof(short):
+					return "-?[0-9]{1, 10}";
+				case typeof(ushort):
+					return "[0-9]{1, 11}";
+				case typeof(string):
+				default:
+					return ".*";
+			}
+		}
+
+		static IEnumerable<RestMethodAttribute> fetchAttributes(this MethodInfo responder)
+		{
+			return responder.GetCustomAttributes(typeof(RestMethodAttribute), true).Cast<RestMethodAttribute>();
 		}
 	}
 
@@ -44,105 +101,28 @@ namespace Flow.Handlers
 	{
 		public RestMethodAttribute()
 		{
-			Methods = RequestMethod.AllCommon;
+			Method = RequestMethods.All;
 		}
 
-		public RequestMethod[] Methods { get; set; }
+		public RequestMethods Method { get; set; }
 
 		/// <summary>
 		/// The pattern which to match and reflect the path. Simple regular expressions are allowed.
 		/// </summary>
-		public string PathPattern { get; set; }
+		public string Pattern { get; set; }
 	}
 
-	public class RequestMethod
+	public enum RequestMethods
 	{
-		string method;
-
-		internal RequestMethod(string method)
-		{
-			Method = method;
-		}
-
-		public string Method
-		{
-			get
-			{
-				return method;
-			}
-			set
-			{
-				method = value.ToUpper();
-			}
-		}
-
-		public static implicit operator RequestMethod(string method)
-		{
-			return new RequestMethod(method);
-		}
-
-		public static implicit operator string(RequestMethod method)
-		{
-			return method.Method;
-		}
-
-		public static implicit operator RequestMethod[](RequestMethod method)
-		{
-			return new[] { method };
-		}
-
-		public static bool operator ==(RequestMethod a, RequestMethod b)
-		{
-			return a.method == b.method;
-		}
-
-		public static bool operator ==(string a, RequestMethod b)
-		{
-			return a.ToUpper() == b.method;
-		}
-
-		public static bool operator ==(RequestMethod a, string b)
-		{
-			return b == a;
-		}
-
-		public static bool operator !=(RequestMethod a, RequestMethod b)
-		{
-			return !(a == b);
-		}
-
-		public static bool operator !=(string a, RequestMethod b)
-		{
-			return !(a == b);
-		}
-
-		public static bool operator !=(RequestMethod a, string b)
-		{
-			return !(a == b);
-		}
-
-		static RequestMethod()
-		{
-			Head = "Head";
-			Get = "Get";
-			Post = "Post";
-			Put = "Put";
-			Delete = "Delete";
-			Trace = "Trace";
-			Options = "Options";
-			Connect = "Connect";
-
-			AllCommon = new [] { Head, Get, Post, Put, Delete, Trace, Options, Connect };
-		}
-
-		public static RequestMethod Head { get; private set; }
-		public static RequestMethod Get { get; private set; }
-		public static RequestMethod Post { get; private set; }
-		public static RequestMethod Put { get; private set; }
-		public static RequestMethod Delete { get; private set; }
-		public static RequestMethod Trace { get; private set; }
-		public static RequestMethod Options { get; private set; }
-		public static RequestMethod Connect { get; private set; }
-		public static RequestMethod[] AllCommon { get; private set; }
+		None = 0,
+		Head = 1 << 0,
+		Get = 1 << 1,
+		Post = 1 << 2,
+		Put = 1 << 3,
+		Delete = 1 << 4,
+		Trace = 1 << 5,
+		Options = 1 << 6,
+		Connect = 1 << 7,
+		All = Head | Get | Post | Put | Delete | Trace | Options | Connect
 	}
 }
