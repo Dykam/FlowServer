@@ -87,7 +87,10 @@ namespace Flow
 									request.Dispose();
 								}
 							}
-							catch {
+							catch (Exception ex) {
+#if DEBUG
+								Console.WriteLine(ex);
+#endif
 							}
 						}
 					}

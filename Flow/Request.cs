@@ -12,12 +12,11 @@ namespace Flow
 	{
 		public bool Used { get; private set; }
 
-		public ReadOnlyNetworkStream Body { get; private set; }
+		public ReadOnlyNetworkStream Body { get { return body; } }
 
 		internal Request(Router router, TcpClient newClient, int port, Func<int, string> statusMessageFetcher, string httpVersion)
 			: base(router, newClient, port, statusMessageFetcher, httpVersion)
 		{
-			body = new ReadOnlyNetworkStream(newClient.GetStream());
 		}
 		internal Request(Router router, TcpClient newClient, int port, Func<int, string> statusMessageFetcher)
 			: this(router, newClient, port, statusMessageFetcher, defaultHtppVersion)
@@ -85,6 +84,11 @@ namespace Flow
 		{
 			if (Used)
 				throw new InvalidOperationException("You can not use a request twice.");
+		}
+
+		public override string ToString()
+		{
+			return string.Format("Request from {0}.", Client.Client.RemoteEndPoint);
 		}
 	}
 }

@@ -31,12 +31,14 @@ namespace Flow
 				return this;
 			}
 
-			public void RespondWith(Action<Request> responder)
+			public Router RespondWith(Action<Request> responder)
 			{
 				usedChecker();
 
 				used = true;
 				router.processors.Add(new Responder(responder, conditions));
+
+				return router;
 			}
 
 			void usedChecker()

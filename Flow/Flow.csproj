@@ -40,7 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions.cs" />
     <Compile Include="Handlers\Rest.cs" />
+    <Compile Include="RequestMethods.cs" />
     <Compile Include="Responders\TextResponse.cs" />
     <Compile Include="RequestInfo.cs" />
     <Compile Include="Responder.cs" />

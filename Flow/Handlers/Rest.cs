@@ -12,7 +12,7 @@ namespace Flow.Handlers
 		public static Router AddRest<T1, T2, T3>(this Router router, Action<Request, T1, T2, T3> responder)
 		{
 			router.add(responder);
-			return router;	
+			return router;
 		}
 		public static Router AddRest<T1, T2>(this Router router, Action<Request, T1, T2> responder)
 		{
@@ -30,69 +30,111 @@ namespace Flow.Handlers
 			return router;
 		}
 
+		static string getMatcher(Type type)
+		{
+			if (type == typeof(int)) {
+				return "-?[0-9]{0, 21}";
+			} else if (type == typeof(uint)) {
+				return "[0-9]{1, 22}";
+			} else if (type == typeof(long)) {
+				return "-?[0-9]{0, 43}";
+			} else if (type == typeof(ulong)) {
+				return "[0-9]{1, 44}";
+			} else if (type == typeof(short)) {
+				return "-?[0-9]{0, 10}";
+			} else if (type == typeof(ushort)) {
+				return "[0-9]{1, 11}";
+			} else {
+				return ".*";
+			}
+		}
+
+		static Func<string, object> getParser(Type type)
+		{
+			if (type == typeof(int)) {
+				return s => int.Parse(s);
+			} else if (type == typeof(uint)) {
+				return s => uint.Parse(s);
+			} else if (type == typeof(long)) {
+				return s => long.Parse(s);
+			} else if (type == typeof(ulong)) {
+				return s => ulong.Parse(s);
+			} else if (type == typeof(short)) {
+				return s => short.Parse(s);
+			} else if (type == typeof(ushort)) {
+				return s => ushort.Parse(s);
+			} else {
+				return s => s;
+			}
+		}
+
 		static void add(this Router router, Delegate responder)
 		{
 			foreach (var method in responder.GetInvocationList().Select(del => del.Method)) {
-				var attributes = method.fetchAttributes();
-				IEnumerator<RestMethodAttribute> enumer = attributes.GetEnumerator();
-				var regexes = new List<Regex>();
-				if (!enumer.MoveNext()) {
-					regexes.Add(method.fetchPathMatcher());
-				} else {
-					do {
-						var regex = enumer.Current.Pattern.Replace("/", ")/(");
-						if (regex.EndsWith("("))
-							regex = regex.Substring(0, regex.Length - 1);
-						if (regex.StartsWith(")"))
-							regex = regex.Substring(1);
-					} while (enumer.MoveNext());
-				}
+				var typeProcessor = (
+					from param in method.GetParameters().Skip(1)
+					let parser = getParser(param.ParameterType)
+					let matcher = getMatcher(param.ParameterType)
+					select new
+					{
+						Parser = parser,
+						Matcher = matcher
+					}).ToArray();
+				var parsers = (
+					from processor in typeProcessor
+					select processor.Parser
+					).ToArray();
+				var matchers = (
+					 from processor in typeProcessor
+					 select new Regex("(" + processor.Matcher + ")")
+					 ).ToArray();
+				var handler = new RestHandler(method, parsers, matchers);
+				router
+					.If(handler.Takes)
+					.RespondWith(handler.Handle);
 			}
 		}
+	}
 
-		static Regex fetchPathMatcher(this MethodInfo responder)
+	class RestHandler
+	{
+		Regex[] matchers;
+		MethodInfo method;
+		Func<string, object>[] parsers;
+
+		public RestHandler(MethodInfo method, Func<string, object>[] parsers, Regex[] matchers)
 		{
-			var parts =
-				responder
-				.GetParameters()
-				.Select(param => (param.DefaultValue ?? param.fetchPartMatcher()).ToString());
-				
-			var builder =
-				parts
-				.Aggregate(new StringBuilder("/("), (b, s) => b.Append(s).Append(")/("));
-
-			return
-				new Regex(
-					builder
-					.Remove(builder.Length - 2, 2)
-					.ToString()
-				);
+			this.method = method;
+			this.parsers = parsers;
+			this.matchers = matchers;
 		}
 
-		static string fetchPartMatcher(this ParameterInfo info)
+		public bool Takes(Request request)
 		{
-			switch (info.ParameterType) {
-				case typeof(int):
-					return "-?[0-9]{1, 21}";
-				case typeof(uint):
-					return "[0-9]{1, 22}";
-				case typeof(long):
-					return "-?[0-9]{1, 43}";
-				case typeof(ulong):
-					return "[0-9]{1, 44}";
-				case typeof(short):
-					return "-?[0-9]{1, 10}";
-				case typeof(ushort):
-					return "[0-9]{1, 11}";
-				case typeof(string):
-				default:
-					return ".*";
+			var parts = request.Path.Split('/').Where(s => !string.IsNullOrEmpty(s)).ToArray();
+			if (parts.Length != matchers.Length)
+				return false;
+
+			for (int i = 0; i > parts.Length; i++) {
+				if (!matchers[i].IsMatch(parts[i]))
+					return false;
 			}
+			return true;
 		}
 
-		static IEnumerable<RestMethodAttribute> fetchAttributes(this MethodInfo responder)
+		public void Handle(Request request)
 		{
-			return responder.GetCustomAttributes(typeof(RestMethodAttribute), true).Cast<RestMethodAttribute>();
+			var parts = request.Path.Split('/');
+			var parameters = matchers.ZipSelect(parts, parsers, (matcher, part, parse) =>
+			{
+				Console.WriteLine("Testing {0} for {1}", request.Path, matchers.StreamToString(", "));				
+				var match = matcher.Match(part);
+				var capture = match.Captures[0].ToString();
+				return parse(capture);
+			});
+
+			method.Invoke(null, new object[] { request }.Concat(parameters).ToArray());
+
 		}
 	}
 
@@ -110,19 +152,5 @@ namespace Flow.Handlers
 		/// The pattern which to match and reflect the path. Simple regular expressions are allowed.
 		/// </summary>
 		public string Pattern { get; set; }
-	}
-
-	public enum RequestMethods
-	{
-		None = 0,
-		Head = 1 << 0,
-		Get = 1 << 1,
-		Post = 1 << 2,
-		Put = 1 << 3,
-		Delete = 1 << 4,
-		Trace = 1 << 5,
-		Options = 1 << 6,
-		Connect = 1 << 7,
-		All = Head | Get | Post | Put | Delete | Trace | Options | Connect
 	}
 }

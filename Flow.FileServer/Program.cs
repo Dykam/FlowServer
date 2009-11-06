@@ -15,8 +15,13 @@ namespace Flow.FileServer
 		static void Main(string[] args)
 		{
 			pads = new Dictionary<int,string>();
+			pads.Add(1, "message");
+			pads.Add(2, "message");
 			var router = new Router();
 			router
+				.If(request => { Console.WriteLine(request.Client.Client.RemoteEndPoint); return false; })
+				.RespondWith(null)
+				//.AddRest(new Action<Request>(getRoot))
 				.AddRest<string, int>(getNotepadItem)
 				.AddRest<string, int>(putNotepadItem)
 				.AddRest<string>(getNotepad)
@@ -40,6 +45,15 @@ namespace Flow.FileServer
 			request
 				.Respond(status)
 				.StreamText(text);
+		}
+
+		[RestMethod(Method = RequestMethods.Get, Pattern = "/.*/")]
+		public static void getRoot(Request request)
+		{
+			Console.WriteLine(request);
+			request
+				.Respond(200)
+				.StreamText("you are on root");
 		}
 
 		[RestMethod(Method = RequestMethods.Put, Pattern = "/notepad/[0-9]+")]

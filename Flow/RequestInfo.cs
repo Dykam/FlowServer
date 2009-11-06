@@ -40,6 +40,7 @@ namespace Flow
 			GetStatusMessage = statusMessageFetcher;
 			this.httpVersion = httpVersion;
 			@Router = router;
+			body = new ReadOnlyNetworkStream(newClient.GetStream());
 
 			Client = newClient;
 			stream = Client.GetStream();
@@ -106,6 +107,8 @@ namespace Flow
 		{
 			string firstLine;
 			do {
+				if (!body.DataAvailable)
+					return false;
 				firstLine = reader.ReadLine();
 				if (string.IsNullOrEmpty(firstLine))
 					return false;
