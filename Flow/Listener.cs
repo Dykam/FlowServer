@@ -80,7 +80,7 @@ namespace Flow
 
 							if (!accepted) {
 								request
-									.Respond(500)
+									.Respond(404)
 									.Finish()
 									.Dispose();
 								request.Dispose();

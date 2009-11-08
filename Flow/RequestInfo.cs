@@ -51,9 +51,8 @@ namespace Flow
 
 			Headers = new ReadOnlySmartDictionary<string, string>(headers);
 
-			if (!fetchRequestLine()) {
-				throw new Exception("Error during fetching of the request line.");
-			}
+			fetchRequestLine();
+
 			if (!fetchHeaders()) {
 				throw new Exception("Error during fetching of the headers.");
 			}
@@ -103,13 +102,13 @@ namespace Flow
 			return true;
 		}
 
-		bool fetchRequestLine()
+		void fetchRequestLine()
 		{
 			string firstLine;
 			do {
 				firstLine = reader.ReadLine();
 				if (string.IsNullOrEmpty(firstLine))
-					return false;
+					throw new Exception("Error during fetching of the request line.");
 			} while (firstLine == "\n" || firstLine == "\r\n" || firstLine == "\r");
 			if (!string.IsNullOrEmpty(firstLine)) {
 				var firstLineMatch = firstLineParser.Match(firstLine);
@@ -121,7 +120,6 @@ namespace Flow
 				Path = Uri.UnescapeDataString(Path);
 				Version = firstLineMatch.Groups["Version"].ToString();
 			}
-			return true;
 		}
 
 		public void Dispose()

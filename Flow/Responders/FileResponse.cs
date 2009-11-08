@@ -16,14 +16,17 @@ namespace Flow.Responders
 					response
 					.Add("Content-Type", mime)
 					.Add("Content-Lenght", fileStream.Length.ToString())
+					.Add("Connection", "Close")
 					.Finish();
 				using (responseStream) {
 					var buffer = new Byte[BufferSize];
-					int bytesRead = -1;
-					while (bytesRead != 0 && responseStream.CanWrite && fileStream.CanRead) {
-						bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+					while (responseStream.CanWrite && fileStream.CanRead) {
+						var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+						if (bytesRead == 0)
+							break;
 						responseStream.Write(buffer, 0, bytesRead);
 					}
+					responseStream.Flush();
 				}
 			}
 		}

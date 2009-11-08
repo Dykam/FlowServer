@@ -71,14 +71,15 @@ namespace Flow.Handlers
 		static void add(this Router router, Delegate responder)
 		{
 			foreach (var method in responder.GetInvocationList().Select(del => del.Method)) {
-				var defaultParsersAttribute =
+				var defaultAttribute =
 					Attribute
-					.GetCustomAttribute(method, typeof(RestDefaultParserAttribute), true)
-					as RestDefaultParserAttribute;
+					.GetCustomAttribute(method, typeof(RestDefaultAttribute), true)
+					as RestDefaultAttribute;
 				Func<string, object>[] defaultParsers = null;
-				if (defaultParsersAttribute != null)
-					defaultParsers = defaultParsersAttribute.Parsers;
-
+				Regex[] defaultMatchers = null;
+				if (defaultAttribute != null) {
+					defaultParsers = defaultAttribute.Parsers;
+				}
 
 				var attributes =
 					Attribute
@@ -87,21 +88,21 @@ namespace Flow.Handlers
 					.ToArray();
 				if (attributes.Length != 0) {
 					Func<string, object>[] parsers = null;
+					Regex[] matchers = null;
 
 					foreach (var attribute in attributes) {
 						if (attribute.Parsers == null && parsers == null) {
 							parsers = defaultParsers ?? fetchParsersByParameter(method).ToArray();
 						}
+						if (attribute.Pattern == null && matchers == null) {
+							matchers = defaultMatchers ?? fetchMatchersByParameter(method).ToArray();
+						}
 
-						var matchers = (
-								from resource in attribute
-									.Pattern
-									.Split('/')
-									.Where(s => !string.IsNullOrEmpty(s))
-								select patternToRegex(resource)
-							).ToArray();
+						Regex[] attributeMatchers = null;
+						if (attribute.Pattern != null)
+							attributeMatchers = patternsToRegex(attribute.Pattern).ToArray();
 
-						var handler = new RestHandler(method, attribute.Method, attribute.Parsers ?? parsers, matchers);
+						var handler = new RestHandler(method, attribute.Method, attribute.Parsers ?? parsers, attributeMatchers ?? matchers);
 						router
 							.If(handler.Takes)
 							.RespondWith(handler.Handle);
@@ -116,6 +117,13 @@ namespace Flow.Handlers
 						.RespondWith(handler.Handle);
 				}
 			}
+		}
+
+		static IEnumerable<Regex> patternsToRegex(string pattern) {
+			return
+				from resource in pattern.Split('/')
+				where !string.IsNullOrEmpty(resource)
+				select patternToRegex(resource);
 		}
 
 		static Regex patternToRegex(string pattern)
@@ -156,9 +164,7 @@ namespace Flow.Handlers
 
 		public bool Takes(Request request)
 		{
-			Console.WriteLine("With: {0} {1}", requestMethods, matchers.StreamToString("/"));
-			Console.WriteLine("I test {0} {1}", request.Method, request.Path);
-			if ((request.Method | requestMethods) != request.Method)
+			if ((request.Method & requestMethods) != request.Method)
 				return false;
 			
 			var parts = request.Path.Split('/').Where(s => !string.IsNullOrEmpty(s)).ToArray();
@@ -170,7 +176,6 @@ namespace Flow.Handlers
 				if (!matchers[i].IsMatch(parts[i]))
 					return false;
 			}
-			Console.WriteLine("Match!");
 			return true;
 		}
 
@@ -190,13 +195,15 @@ namespace Flow.Handlers
 	}
 
 	[global::System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-	sealed class RestDefaultParserAttribute : Attribute
+	sealed class RestDefaultAttribute : Attribute
 	{
-		public RestDefaultParserAttribute()
+		public RestDefaultAttribute()
 		{
 		}
 
 		public Func<string, object>[] Parsers { get; set; }
+
+		public string Pattern { get; set; }
 	}
 
 	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]

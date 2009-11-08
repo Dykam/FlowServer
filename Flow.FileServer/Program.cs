@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using Flow.Handlers;
 using System.Collections.Generic;
+using Flow.Fetchers;
 
 namespace Flow.FileServer
 {
@@ -25,7 +26,8 @@ namespace Flow.FileServer
 				.AddRest<string, int>(getNotepadItem)
 				.AddRest<string, int>(putNotepadItem)
 				.AddRest<string>(getNotepad)
-				.AddRest<string>(postNotepad);
+				.AddRest<string>(postNotepad)
+				.AddRest<string>(catchAll);
 			router.Start();
 		}
 
@@ -45,15 +47,25 @@ namespace Flow.FileServer
 			request
 				.Respond(status)
 				.StreamText(text);
+			request.Dispose();
 		}
 
 		[RestMethod(Method = RequestMethods.Get, Pattern = "/")]
 		public static void getRoot(Request request)
 		{
-			Console.WriteLine(request);
 			request
 				.Respond(200)
-				.StreamText("you are on root");
+				.StreamFile(Path.Combine(Environment.CurrentDirectory, "index.htm"), "text/html");
+			request.Dispose();
+		}
+
+		[RestMethod]
+		public static void catchAll(Request request, string path)
+		{
+			request
+				.Respond(200)
+				.StreamFile(Path.Combine(Environment.CurrentDirectory, path), "text/plain");
+			request.Dispose();
 		}
 
 		[RestMethod(Method = RequestMethods.Put, Pattern = "/notepad/[0-9]+")]
@@ -73,6 +85,7 @@ namespace Flow.FileServer
 			}
 
 			request.Respond(200).Finish().Dispose();
+			request.Dispose();
 		}
 
 		[RestMethod(Method = RequestMethods.Get, Pattern = "/notepad/")]
@@ -83,26 +96,31 @@ namespace Flow.FileServer
 			lock (pads) {
 				text =
 					pads
-					.Select(pair => string.Format(@"<li><a href=""/notepad/{0}"">{1}...</a></li>", pair.Key, pair.Value.Length > 50 ? pair.Value.Substring(0, 50) : pair.Value))
+					.Select(pair => pair.Key.ToString())
 					.Aggregate(new StringBuilder(), (builder, sect) => { builder.AppendLine(sect); return builder; });
 				length = pads.Count;
 			}
 
 			request
 				.Respond(200)
-				.StreamText(string.Format("<html><head><title>{0} found</title></head><body><ul>{1}</ul></body></html>", length, text.ToString()), "text/html");
+				.StreamText(text.ToString(), "text/plain");
+			request.Dispose();
 		}
 
 		[RestMethod(Method = RequestMethods.Post, Pattern = "/notepad/")]
 		static void postNotepad(Request request, string beNotepad)
 		{
-			var text = ((TextReader)new StreamReader(request.Body)).ReadToEnd();
+			var text = request.FetchText();
+			int key;
 			lock (pads) {
-				var key = pads.Count;
+				key = pads.Count;
 				pads.Add(key, text);
 			}
 
-			request.Respond(200).Finish().Dispose();
+			request
+				.Respond(200)
+				.StreamText(key.ToString());
+			request.Dispose();
 		}
 
 		static Dictionary<int, string> pads;
