@@ -107,8 +107,6 @@ namespace Flow
 		{
 			string firstLine;
 			do {
-				if (!body.DataAvailable)
-					return false;
 				firstLine = reader.ReadLine();
 				if (string.IsNullOrEmpty(firstLine))
 					return false;
@@ -116,7 +114,7 @@ namespace Flow
 			if (!string.IsNullOrEmpty(firstLine)) {
 				var firstLineMatch = firstLineParser.Match(firstLine);
 				var method = firstLineMatch.Groups["Method"].ToString();
-				if (enumTryParse(method, out this.method)) {
+				if (!enumTryParse(method, out this.method)) {
 					this.method = RequestMethods.None;
 				}
 				Path = firstLineMatch.Groups["Path"].ToString();

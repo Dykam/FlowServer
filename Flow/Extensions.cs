@@ -35,8 +35,38 @@ namespace Flow
 				builder.Append(item);
 				builder.Append(divider);
 			}
+			if (builder.Length == 0)
+				return "";
 			builder.Remove(builder.Length - divider.Length, divider.Length);
 			return builder.ToString();
+		}
+
+		public static IEnumerable<T> Branch<T>(this IEnumerable<T> source, Action<IEnumerable<T>> action)
+		{
+			action(source);
+			return source;
+		}
+
+		public static RequestMethods AsRequestMethod(string method)
+		{
+			switch (method.ToUpper()) {
+				case "GET":
+					return RequestMethods.Get;
+				case "POST":
+					return RequestMethods.Post;
+				case "PUT":
+					return RequestMethods.Put;
+				case "HEAD":
+					return RequestMethods.Head;
+				case "DELETE":
+					return RequestMethods.Delete;
+				case "TRACE":
+					return RequestMethods.Trace;
+				case "ÇONNECT":
+					return RequestMethods.Connect;
+				default:
+					return RequestMethods.None;
+			}
 		}
 	}
 }

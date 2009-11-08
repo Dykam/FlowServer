@@ -21,7 +21,7 @@ namespace Flow.FileServer
 			router
 				.If(request => { Console.WriteLine(request.Client.Client.RemoteEndPoint); return false; })
 				.RespondWith(null)
-				//.AddRest(new Action<Request>(getRoot))
+				.AddRest(new Action<Request>(getRoot))
 				.AddRest<string, int>(getNotepadItem)
 				.AddRest<string, int>(putNotepadItem)
 				.AddRest<string>(getNotepad)
@@ -47,7 +47,7 @@ namespace Flow.FileServer
 				.StreamText(text);
 		}
 
-		[RestMethod(Method = RequestMethods.Get, Pattern = "/.*/")]
+		[RestMethod(Method = RequestMethods.Get, Pattern = "/")]
 		public static void getRoot(Request request)
 		{
 			Console.WriteLine(request);
@@ -78,20 +78,19 @@ namespace Flow.FileServer
 		[RestMethod(Method = RequestMethods.Get, Pattern = "/notepad/")]
 		static void getNotepad(Request request, string beNotepad)
 		{
-			string text;
+			StringBuilder text;
 			int length;
 			lock (pads) {
 				text =
 					pads
-					.Select(pair => string.Format(@"<li><a href=""/notepad/{0}"">{1}</a></li>", pair.Key, pair.Value))
-					.Aggregate(new StringBuilder(), (builder, sect) => { builder.AppendLine(sect); return builder; })
-					.ToString();
+					.Select(pair => string.Format(@"<li><a href=""/notepad/{0}"">{1}...</a></li>", pair.Key, pair.Value.Length > 50 ? pair.Value.Substring(0, 50) : pair.Value))
+					.Aggregate(new StringBuilder(), (builder, sect) => { builder.AppendLine(sect); return builder; });
 				length = pads.Count;
 			}
 
 			request
 				.Respond(200)
-				.StreamText(string.Format("<html><head><title>{0} found</title></head><body><ul>{1}</ul></body></html>", length, text), "text/html");
+				.StreamText(string.Format("<html><head><title>{0} found</title></head><body><ul>{1}</ul></body></html>", length, text.ToString()), "text/html");
 		}
 
 		[RestMethod(Method = RequestMethods.Post, Pattern = "/notepad/")]
