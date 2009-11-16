@@ -1,23 +1,52 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Flow
 {
+	/// <remarks>
+	/// <para>
+	/// Manages addition and removal automagically.
+	/// </para>
+	/// <para>
+	/// The default value of V is returned in case the base dictionary does not contain the key.
+	/// When the value is set and the value equals the default value of V, the key is removed.
+	/// </para>
+	/// </remarks>
 	public class SmartDictionary<K, V> : IEnumerable<KeyValuePair<K, V>>
 	{
 		internal Dictionary<K, V> dict;
-
+		
+		/// <summary>
+		/// Constructs a new <see cref="SmartDictionary"/>, using the <see cref="Dictionary"/> as base.
+		/// </summary>
+		/// <param name="dict">
+		/// A <see cref="Dictionary"/> to use as base. Changes are reflected in both in the <see cref="Dictionary"/> and the <see cref="SmartDictionary"/>.
+		/// </param>
+		/// <remarks>
+		/// Changes are reflected in both in the <see cref="Dictionary"/> and the <see cref="SmartDictionary"/>.
+		/// </remarks>
 		public SmartDictionary(Dictionary<K, V> dict)
 		{
 			this.dict = dict;
 		}
 
+		/// <summary>
+		/// Constructs a new empty <see cref="SmartDictionary"/>.
+		/// </summary>
 		public SmartDictionary()
 			: this(new Dictionary<K, V>())
 		{
 		}
-
+		
+		//// <value>
+		/// Sets or unsets the value related to the key.
+		/// </value>
+		/// <summary>
+		/// The default value of V is returned in case the base dictionary does not contain the key.
+		/// When the value is set and the value equals the default value of V, the key is removed.
+		/// </summary>
 		public V this[K key]
 		{
 			get
@@ -31,29 +60,36 @@ namespace Flow
 			set
 			{
 				if (dict.ContainsKey(key)) {
-					dict[key] = value;
+					if(isNullOrDefault(value)) // Remove if it is the default value.			
+						dict.Remove(key);
+					else
+						dict[key] = value;
 				} else {
-					dict.Add(key, value);
+					if(!isNullOrDefault(value))
+						dict.Add(key, value);
 				}
 			}
 		}
+		
+		static bool isNullOrDefault<T>(T value)
+		{
+			return value == null || value.Equals(default(V));
+		}
 
-		#region IEnumerable<KeyValuePair<K,V>> Members
-
+		/// <summary>
+		///Returns an IEnumerable to iterate through the keys and values. 
+		/// </summary>
 		public IEnumerator<KeyValuePair<K, V>> GetEnumerator()
 		{
 			return dict.GetEnumerator();
 		}
-
-		#endregion
-
-		#region IEnumerable Members
-
+		
+		/// <summary>
+		///Returns an IEnumerable to iterate through the keys and values. 
+		/// </summary>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return dict.GetEnumerator();
 		}
-
-		#endregion
 	}
 }

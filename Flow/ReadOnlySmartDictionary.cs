@@ -4,21 +4,43 @@ using System.Collections.Generic;
 
 namespace Flow
 {
-
+	/// <remarks>
+	/// <para>
+	/// Manages non-existing keys automagically.
+	/// </para>
+	/// <para>
+	/// The default value of V is returned in case the base dictionary does not contain the key.
+	/// </para>
+	/// </remarks>
 	public class ReadOnlySmartDictionary<K, V> : IEnumerable<KeyValuePair<K, V>>
 	{
 		internal Dictionary<K, V> dict;
 
+		/// <summary>
+		/// Constructs a new <see cref="ReadOnlySmartDictionary"/>.
+		/// </summary>
+		/// <param name="dict">
+		/// A <see cref="SmartDictionary"/> to use as a base. Changes are reflected in this instance.
+		/// </param>
 		public ReadOnlySmartDictionary(SmartDictionary<K, V> dict)
 		{
 			this.dict = dict.dict;
 		}
 
+		/// <summary>
+		/// Constructs a new <see cref="ReadOnlySmartDictionary"/>.
+		/// </summary>
+		/// <param name="dict">
+		/// A <see cref="Dictionary"/> to use as a base. Changes are reflected in this instance.
+		/// </param>
 		public ReadOnlySmartDictionary(Dictionary<K, V> dict)
 		{
 			this.dict = dict;
 		}
 
+		/// <value>
+		/// Sets or unsets the value related to the key.
+		/// </value>
 		public V this[K key]
 		{
 			get
@@ -31,22 +53,20 @@ namespace Flow
 			}
 		}
 
-		#region IEnumerable<KeyValuePair<K,V>> Members
-
+		/// <summary>
+		///Returns an IEnumerable to iterate through the keys and values. 
+		/// </summary>
 		public IEnumerator<KeyValuePair<K, V>> GetEnumerator()
 		{
 			return dict.GetEnumerator();
 		}
-
-		#endregion
-
-		#region IEnumerable Members
-
+		
+		/// <summary>
+		///Returns an IEnumerable to iterate through the keys and values. 
+		/// </summary>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return dict.GetEnumerator();
 		}
-
-		#endregion
 	}
 }

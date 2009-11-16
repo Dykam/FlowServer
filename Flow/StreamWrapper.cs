@@ -22,7 +22,7 @@ namespace Flow
 				// Not implemented
 			}
 		}
-
+		
 		public override bool CanRead
 		{
 			get { return Source.CanRead; }
@@ -81,6 +81,9 @@ namespace Flow
 		}
 	}
 
+	/// <remarks>
+	/// Makes the base stream appear readonly.
+	/// </remarks>
 	public class ReadOnlyNetworkStream : StreamWrapper<NetworkStream>
 	{
 		internal ReadOnlyNetworkStream(NetworkStream source)
@@ -112,6 +115,9 @@ namespace Flow
 		}
 	}
 
+	/// <remarks>
+	/// Makes the base stream appear writeonly.
+	/// </remarks>
 	class WriteOnlyStreamWrapper : StreamWrapper<Stream>
 	{
 		public WriteOnlyStreamWrapper(Stream source)

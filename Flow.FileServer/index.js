@@ -30,7 +30,14 @@ $(function() {
 	var area = $("#text");
 	var element = $('<select id="nr"></select>');
 	$.get("notepad", function(result) {
-		var lines = result.split("\r\n");
+		var lines = [""]
+		if(result.indexOf("\r\n") != -1) {
+			lines = result.split("\r\n");
+		} else if(result.indexOf("\n") != -1) {
+			lines = result.split("\n");
+		} else {
+			lines = result.split("\r");
+		}
 		var length = lines.length;
 		for(var i = 0; i < length; i++) {
 			var line = lines[i];

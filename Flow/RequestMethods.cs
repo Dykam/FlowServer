@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Flow
 {
+	/// <remarks>
+	/// The HTTP Request Methods.
+	/// </remarks>
 	public enum RequestMethods
 	{
 		None = 0,

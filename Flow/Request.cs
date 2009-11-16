@@ -8,10 +8,19 @@ using System.Text.RegularExpressions;
 
 namespace Flow
 {
+	/// <remarks>
+	/// Contains the incoming request.
+	/// </remarks>
 	public class Request : RequestInfo
 	{
+		/// <value>
+		/// Returns true if there is already responded to the request.
+		/// </value>
 		public bool Used { get; private set; }
 
+		/// <value>
+		/// The body of the request.
+		/// </value>
 		public ReadOnlyNetworkStream Body { get { return body; } }
 
 		internal Request(Router router, TcpClient newClient, int port, Func<int, string> statusMessageFetcher, string httpVersion)
@@ -31,50 +40,71 @@ namespace Flow
 		{
 		}
 		
-		public HeaderBuilder Respond(string version, int status, string statusMessage, IEnumerable<KeyValuePair<string, string>> headers)
-		{
-			checkIfUsed();
-
-			Used = true;
-			var writer = (TextWriter)new StreamWriter(stream);
-			writer.WriteLine("{0} {1} {2}", version, status, statusMessage);
-			writer.Flush();
-			response = new HeaderBuilder(new WriteOnlyStreamWrapper(stream));
-			foreach (var header in headers)
-				response.Add(headers);
-			return response;
-		}
-		public HeaderBuilder Respond(string version, int status, IEnumerable<KeyValuePair<string, string>> headers)
-		{
-			return Respond(version, status, GetStatusMessage(status), headers);
-		}
-		public HeaderBuilder Respond(int status, IEnumerable<KeyValuePair<string, string>> headers)
-		{
-			return Respond(httpVersion, status, headers);
-		}
-		public HeaderBuilder Respond(int status, string statusMessage, IEnumerable<KeyValuePair<string, string>> headers)
-		{
-			return Respond(httpVersion, status, statusMessage, headers);
-		}
-
+		/// <summary>
+		/// Starts the response to the request.
+		/// </summary>
+		/// <param name="version">
+		/// A <see cref="System.String"/> denoting the HTTP version of the response.
+		/// </param>
+		/// <param name="status">
+		/// A <see cref="System.Int32"/> denoting the HTTP status code.
+		/// </param>
+		/// <param name="statusMessage">
+		/// A <see cref="System.String"/>  denoting the human readable form of the status code.
+		/// </param>
+		/// <returns>
+		/// A <see cref="HeaderBuilder"/> to add the headers to return to the client.
+		/// </returns>
 		public HeaderBuilder Respond(string version, int status, string statusMessage)
 		{
 			checkIfUsed();
-
+			Used = true;
+			
 			var writer = (TextWriter)new StreamWriter(stream);
 			writer.WriteLine("{0} {1} {2}", version, status, statusMessage);
 			writer.Flush();
 			response = new HeaderBuilder(new WriteOnlyStreamWrapper(stream));
 			return response;
 		}
+		/// <summary>
+		/// Starts the response to the request.
+		/// </summary>
+		/// <param name="version">
+		/// A <see cref="System.String"/> denoting the HTTP version of the response.
+		/// </param>
+		/// <param name="status">
+		/// A <see cref="System.Int32"/> denoting the HTTP status code.
+		/// </param>
+		/// <returns>
+		/// A <see cref="HeaderBuilder"/> to add the headers to return to the client.
+		/// </returns>
 		public HeaderBuilder Respond(string version, int status)
 		{
 			return Respond(version, status, GetStatusMessage(status));
-		}
+		}/// <summary>
+		/// Starts the response to the request.
+		/// </summary>
+		/// <param name="status">
+		/// A <see cref="System.Int32"/> denoting the HTTP status code.
+		/// </param>
+		/// <returns>
+		/// A <see cref="HeaderBuilder"/> to add the headers to return to the client.
+		/// </returns>
 		public HeaderBuilder Respond(int status)
 		{
 			return Respond(httpVersion, status);
-		}
+		}/// <summary>
+		/// Starts the response to the request.
+		/// </summary>
+		/// <param name="status">
+		/// A <see cref="System.Int32"/> denoting the HTTP status code.
+		/// </param>
+		/// <param name="statusMessage">
+		/// A <see cref="System.String"/>  denoting the human readable form of the status code.
+		/// </param>
+		/// <returns>
+		/// A <see cref="HeaderBuilder"/> to add the headers to return to the client.
+		/// </returns>
 		public HeaderBuilder Respond(int status, string statusMessage)
 		{
 			return Respond(httpVersion, status, statusMessage);
@@ -88,7 +118,7 @@ namespace Flow
 
 		public override string ToString()
 		{
-			return string.Format("Request from {0}.", Client.Client.RemoteEndPoint);
+			return string.Format("{0}: {1} {2} {3}.", Client.Client.RemoteEndPoint, Method, Path, Version);
 		}
 	}
 }
