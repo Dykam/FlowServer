@@ -122,9 +122,12 @@ namespace Flow
 
 		public void Dispose()
 		{
-			Pause();
-			foreach (var listener in listeners) {
-				listener.Dispose();
+			if(!disposed) {
+				disposed = true;
+				Pause();
+				foreach (var listener in listeners) {
+					listener.Dispose();
+				}
 			}
 		}
 	}

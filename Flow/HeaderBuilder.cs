@@ -60,7 +60,7 @@ namespace Flow
 			if (Finished)
 				throw finishedException;
 			foreach (var header in headers) {
-				Add(headers);
+				Add(header);
 			}
 			return this;
 		}

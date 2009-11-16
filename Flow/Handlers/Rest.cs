@@ -7,23 +7,75 @@ using System.Text.RegularExpressions;
 
 namespace Flow.Handlers
 {
+	/// <remarks>
+	/// Contains extension methods to more easily add conditional listening with a specialized responder.
+	/// This class focusses on following the Rest principle.
+	/// </remarks>
 	public static class Rest
 	{
+		/// <summary>
+		/// Adds a responder, and detects on what requests to respond.
+		/// </summary>
+		/// <param name="router">
+		/// A <see cref="Router"/> to add the responder to.
+		/// </param>
+		/// <param name="responder">
+		/// A <see cref="Action"/> to respond with.
+		/// </param>
+		/// <returns>
+		/// A <see cref="Router"/> to add more responders in flow.
+		/// </returns>
 		public static Router AddRest<T1, T2, T3>(this Router router, Action<Request, T1, T2, T3> responder)
 		{
 			router.add(responder);
 			return router;
 		}
+		/// <summary>
+		/// Adds a responder, and detects on what requests to respond.
+		/// </summary>
+		/// <param name="router">
+		/// A <see cref="Router"/> to add the responder to.
+		/// </param>
+		/// <param name="responder">
+		/// A <see cref="Action"/> to respond with.
+		/// </param>
+		/// <returns>
+		/// A <see cref="Router"/> to add more responders in flow.
+		/// </returns>
 		public static Router AddRest<T1, T2>(this Router router, Action<Request, T1, T2> responder)
 		{
 			router.add(responder);
 			return router;
 		}
+		/// <summary>
+		/// Adds a responder, and detects on what requests to respond.
+		/// </summary>
+		/// <param name="router">
+		/// A <see cref="Router"/> to add the responder to.
+		/// </param>
+		/// <param name="responder">
+		/// A <see cref="Action"/> to respond with.
+		/// </param>
+		/// <returns>
+		/// A <see cref="Router"/> to add more responders in flow.
+		/// </returns>
 		public static Router AddRest<T1>(this Router router, Action<Request, T1> responder)
 		{
 			router.add(responder);
 			return router;
 		}
+		/// <summary>
+		/// Adds a responder, and detects on what requests to respond.
+		/// </summary>
+		/// <param name="router">
+		/// A <see cref="Router"/> to add the responder to.
+		/// </param>
+		/// <param name="responder">
+		/// A <see cref="Action"/> to respond with.
+		/// </param>
+		/// <returns>
+		/// A <see cref="Router"/> to add more responders in flow.
+		/// </returns>
 		public static Router AddRest(this Router router, Delegate responder)
 		{
 			router.add(responder);
@@ -194,18 +246,27 @@ namespace Flow.Handlers
 		}
 	}
 
-	[global::System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-	sealed class RestDefaultAttribute : Attribute
+	/// <summary>
+	/// Decorates a method with the default Parsers and/or Pattern to use.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+	public sealed class RestDefaultAttribute : Attribute
 	{
 		public RestDefaultAttribute()
 		{
 		}
 
+		/// <value>
+		/// The default parsers to turn the resource arguments into function parameters.
+		/// </value>
 		public Func<string, object>[] Parsers { get; set; }
 
 		public string Pattern { get; set; }
 	}
 
+	/// <summary>
+	/// Decorates a method with properties denoting the REST resource to represent.
+	/// </summary>
 	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
 	public sealed class RestMethodAttribute : Attribute
 	{
@@ -214,8 +275,14 @@ namespace Flow.Handlers
 			Method = RequestMethods.All;
 		}
 
+		/// <value>
+		/// The parsers to turn the resource arguments into function parameters.
+		/// </value>
 		public Func<string, object>[] Parsers { get; set; }
-
+		
+		//// <value>
+		/// The RequestMethod to accept.
+		/// </value>
 		public RequestMethods Method { get; set; }
 
 		/// <summary>

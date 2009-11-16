@@ -66,6 +66,7 @@ namespace Flow
 			response = new HeaderBuilder(new WriteOnlyStreamWrapper(stream));
 			return response;
 		}
+		
 		/// <summary>
 		/// Starts the response to the request.
 		/// </summary>
@@ -81,7 +82,9 @@ namespace Flow
 		public HeaderBuilder Respond(string version, int status)
 		{
 			return Respond(version, status, GetStatusMessage(status));
-		}/// <summary>
+		}
+		
+		/// <summary>
 		/// Starts the response to the request.
 		/// </summary>
 		/// <param name="status">
@@ -89,11 +92,13 @@ namespace Flow
 		/// </param>
 		/// <returns>
 		/// A <see cref="HeaderBuilder"/> to add the headers to return to the client.
-		/// </returns>
+		/// </returns>		
 		public HeaderBuilder Respond(int status)
 		{
 			return Respond(httpVersion, status);
-		}/// <summary>
+		}
+		
+		/// <summary>
 		/// Starts the response to the request.
 		/// </summary>
 		/// <param name="status">

@@ -6,9 +6,26 @@ using System.IO;
 
 namespace Flow.Responders
 {
+	/// <remarks>
+	/// Contains extension methods to easy responding to a request.
+	/// This class focusses on file wise responding.
+	/// </remarks>
 	public static class FileResponse
 	{
 		const int BufferSize = 4096;
+		
+		/// <summary>
+		/// Streams a file to the response.
+		/// </summary>
+		/// <param name="response">
+		/// A <see cref="HeaderBuilder"/> to get the response from.
+		/// </param>
+		/// <param name="file">
+		/// A <see cref="System.String"/> representing an absolute path pointing to the file to stream.
+		/// </param>
+		/// <param name="mime">
+		/// A <see cref="System.String"/> denoting the mime type of the streamed string. Defaults to "application/octet-stream".
+		/// </param>
 		public static void StreamFile(this HeaderBuilder response, string file, string mime)
 		{
 			using (FileStream fileStream = File.OpenRead(file)) {
@@ -30,16 +47,19 @@ namespace Flow.Responders
 				}
 			}
 		}
-
-		public class FileProperties
+		
+		/// <summary>
+		/// Streams a file to the response.
+		/// </summary>
+		/// <param name="response">
+		/// A <see cref="HeaderBuilder"/> to get the response from.
+		/// </param>
+		/// <param name="file">
+		/// A <see cref="System.String"/> representing an absolute path pointing to the file to stream.
+		/// </param>
+		public static void StreamFile(this HeaderBuilder response, string file)
 		{
-			public string Mime { get; private set; }
-			public string Path { get; private set; }
-			public FileProperties(string mine, string path)
-			{
-				Mime = Mime;
-				Path = path;
-			}
+			StreamFile(response, file, "application/octet-stream");
 		}
 	}
 }
