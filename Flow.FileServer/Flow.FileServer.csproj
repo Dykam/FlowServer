@@ -67,8 +67,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <None Include="index.htm" />
-    <None Include="index.js" />
-  </ItemGroup>
 </Project>

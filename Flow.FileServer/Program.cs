@@ -18,7 +18,13 @@ namespace Flow.FileServer
 			var router = new Router(8080);
 			router
 				.If(request => { Console.WriteLine(request.Client.Client.RemoteEndPoint); return false; })
-				.RespondWith(null);
+				.RespondWith(null)
+				.If(request => true)
+				.RespondWith(request =>
+					request
+						.Respond(404)
+						.StreamText("<html><head><title>404</title></head><body><h1>404 Not Found</h1></body></html>", "text/html")
+				);
 			router.Start();
 		}
 	}
