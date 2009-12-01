@@ -62,6 +62,9 @@
     <Compile Include="Settings.cs" />
     <Compile Include="StreamWrapper.cs" />
     <Compile Include="Responders\FileResponse.cs" />
+    <Compile Include="Handlers\RestDefaultAttribute.cs" />
+    <Compile Include="Handlers\RestMethodAttribute.cs" />
+    <Compile Include="IDumpable.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

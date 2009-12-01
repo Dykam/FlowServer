@@ -44,6 +44,12 @@ namespace Flow
 		/// True if the router is listening for incoming requests.
 		/// </value>
 		public bool Running { get; private set; }
+		
+		/// <value>
+		/// This function is the general error handler for this router instance.
+		/// It should return true if the execution of the router has to be canceled.
+		/// </value>
+		public Func<Exception, Request, bool> ErrorHandler { get; set; }
 
 		/// <summary>
 		/// Constructs a new router to listen to the <paramref name="ports"/>.
@@ -51,12 +57,18 @@ namespace Flow
 		/// <param name="port">
 		/// A <see cref="IEnumerable"/> denoting the ports to listen to.
 		/// </param>
-		public Router(IEnumerable<int> ports)
+		/// <param name="errorHandler">
+		/// A <see cref="Func"/> to handle errors with.
+		/// Should return true if the execution of the router has to be continued.
+		/// </param>
+		public Router(IEnumerable<int> ports, Func<Exception, Request, bool> errorHandler)
 		{
 			processors = new List<Responder>();
 			Ports = new PortList(ports);
 			Ports.PortAdded += new EventHandler<PortList.PortListEventArgs>(PortAdded);
 			Ports.PortRemoved += new EventHandler<PortList.PortListEventArgs>(PortRemoved);
+			
+			ErrorHandler = errorHandler;
 
 			handle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
@@ -65,7 +77,33 @@ namespace Flow
 				.Select(port => new Listener(this, port, handle, processors))
 				.ToList();
 		}
+		
+		/// <summary>
+		/// Constructs a new router to listen to the <paramref name="ports"/>.
+		/// </summary>
+		/// <param name="port">
+		/// A <see cref="IEnumerable"/> denoting the ports to listen to.
+		/// </param>
+		public Router(IEnumerable<int> ports)
+			: this(ports, (ex, req) => false)
+		{
+		}
 
+		/// <summary>
+		/// Constructs a new router to listen to <paramref name="port"/>.
+		/// </summary>
+		/// <param name="port">
+		/// A <see cref="System.Int32"/> denoting the port to listen to.
+		/// </param>
+		/// <param name="errorHandler">
+		/// A <see cref="Func"/> to handle errors with.
+		/// Should return true if the execution of the router has to be continued.
+		/// </param>
+		public Router(int port, Func<Exception, Request, bool> errorHandler)
+			: this(new[] { port }, errorHandler)
+		{
+		}
+		
 		/// <summary>
 		/// Constructs a new router to listen to <paramref name="port"/>.
 		/// </summary>
@@ -74,6 +112,18 @@ namespace Flow
 		/// </param>
 		public Router(int port)
 			: this(new[] { port })
+		{
+		}
+
+		/// <summary>
+		/// Constructs a new router to listen to port 80.
+		/// </summary>
+		/// <param name="errorHandler">
+		/// A <see cref="Func"/> to handle errors with.
+		/// Should return true if the execution of the router has to be continued.
+		/// </param>
+		public Router(Func<Exception, Request, bool> errorHandler)
+			: this(80, errorHandler)
 		{
 		}
 

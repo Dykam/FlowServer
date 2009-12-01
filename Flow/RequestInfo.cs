@@ -26,7 +26,7 @@ namespace Flow
 	/// <remarks>
 	/// Contains the info about the incoming request.
 	/// </remarks>
-	public class RequestInfo : IDisposable
+	public class RequestInfo : IDisposable, IDumpable<RequestInfo.RequestInfoDump>
 	{
 		protected const string defaultHtppVersion = "HTTP/1.1";
 
@@ -175,6 +175,11 @@ namespace Flow
 				disposed = true;
 			}
 		}
+		
+		RequestInfoDump IDumpable<RequestInfoDump>.Dump()
+		{
+			return new RequestInfo.RequestInfoDump(this);
+		}
 
 		static bool enumTryParse<T>(string strType, out T result)
 		{
@@ -191,6 +196,22 @@ namespace Flow
 				}
 				result = default(T);
 				return false;
+			}
+		}
+		
+		public class RequestInfoDump
+		{
+			public RequestInfo RequestInfo { get; private set; }
+			public NetworkStream Stream { get { return RequestInfo.stream; } }
+			public TextReader Reader { get { return RequestInfo.reader; } }
+			public bool Disposed { get { return RequestInfo.disposed; } }
+			public String HttpVersion { get { return RequestInfo.httpVersion; } }
+			public HeaderBuilder Response { get { return RequestInfo.response; } }
+			public SmartDictionary<string, string> Headers { get { return RequestInfo.headers; } }
+			
+			public RequestInfoDump(RequestInfo info)
+			{
+				RequestInfo = info;
 			}
 		}
 	}

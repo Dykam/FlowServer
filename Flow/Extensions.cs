@@ -60,6 +60,49 @@ namespace Flow
 			action(source);
 			return source;
 		}
+		
+		public static IEnumerable<TSource> Concat<TSource>(this IEnumerable<TSource> source, TSource item)
+		{
+			foreach(var sourceItem in source)
+				yield return sourceItem;
+			yield return item;
+		}
+		
+		public static IEnumerable<TSource> Concat<TSource>(this IEnumerable<TSource> source, TSource item1, TSource item2)
+		{			
+			foreach(var item in source)
+				yield return item;
+			yield return item1;
+			yield return item2;
+		}
+		
+		public static IEnumerable<TSource> Concat<TSource>(this IEnumerable<TSource> source, TSource item1, TSource item2, TSource item3)
+		{			
+			foreach(var item in source)
+				yield return item;
+			yield return item1;
+			yield return item2;
+			yield return item3;
+		}
+		
+		public static IEnumerable<TSource> Concat<TSource>(this IEnumerable<TSource> source, TSource item1, TSource item2, TSource item3, TSource item4)
+		{			
+			foreach(var item in source)
+				yield return item;
+			yield return item1;
+			yield return item2;
+			yield return item3;
+			yield return item4;
+		}
+		
+		public static IEnumerable<TSource> Concat<TSource>(this IEnumerable<TSource> source, TSource[] items)
+		{
+			
+			foreach(var item in source)
+				yield return item;
+			foreach(var item in items)
+				yield return item;
+		}
 
 		public static RequestMethods AsRequestMethod(string method)
 		{

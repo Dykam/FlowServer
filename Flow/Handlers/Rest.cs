@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace Flow.Handlers
 {
@@ -147,11 +148,8 @@ namespace Flow.Handlers
 					defaultParsers = defaultAttribute.Parsers;
 				}
 
-				var attributes =
-					Attribute
-					.GetCustomAttributes(method, typeof(RestMethodAttribute), true)
-					.Cast<RestMethodAttribute>()
-					.ToArray();
+				var attributes = fetchAttributes(method).ToArray();
+					
 				if (attributes.Length != 0) {
 					Func<string, object>[] parsers = null;
 					Regex[] matchers = null;
@@ -182,6 +180,35 @@ namespace Flow.Handlers
 						.If(handler.Takes)
 						.RespondWith(handler.Handle);
 				}
+			}
+		}
+		
+		static IEnumerable<RestMethodAttribute> fetchAttributes(MethodInfo method)
+		{
+			bool hasDefaultValue = false;
+			var defaultValuesPattern =
+				method
+				.GetParameters()
+				.Skip(1)
+				.Select(param => Attribute.GetCustomAttribute(param, typeof(DefaultParameterValueAttribute)))
+				.Cast<DefaultParameterValueAttribute>()
+				.Select(attribute => (hasDefaultValue |= attribute != null) ? (string)attribute.Value : ".*")
+				.Aggregate(new StringBuilder(), (builder, str) => builder.Append("/").Append(str))
+				.ToString();
+			Console.WriteLine(defaultValuesPattern);
+			Console.WriteLine(hasDefaultValue);
+			
+			if(hasDefaultValue) {
+				return
+					Attribute
+						.GetCustomAttributes(method, typeof(RestMethodAttribute), true)
+						.Cast<RestMethodAttribute>()
+						.Concat(new RestMethodAttribute() { Pattern = defaultValuesPattern });
+			} else {
+				return
+					Attribute
+						.GetCustomAttributes(method, typeof(RestMethodAttribute), true)
+						.Cast<RestMethodAttribute>();
 			}
 		}
 
@@ -253,55 +280,9 @@ namespace Flow.Handlers
 				var match = matcher.Match(part);
 				var capture = match.Captures[0].ToString();
 				return parse(capture);
-			});
+			}).ToArray();
 
 			method.Invoke(null, new object[] { request }.Concat(parameters).ToArray());
-
 		}
-	}
-
-	/// <summary>
-	/// Decorates a method with the default Parsers and/or Pattern to use.
-	/// </summary>
-	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-	public sealed class RestDefaultAttribute : Attribute
-	{
-		public RestDefaultAttribute()
-		{
-		}
-
-		/// <value>
-		/// The default parsers to turn the resource arguments into function parameters.
-		/// </value>
-		public Func<string, object>[] Parsers { get; set; }
-
-		public string Pattern { get; set; }
-	}
-
-	/// <summary>
-	/// Decorates a method with properties denoting the REST resource to represent.
-	/// </summary>
-	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-	public sealed class RestMethodAttribute : Attribute
-	{
-		public RestMethodAttribute()
-		{
-			Method = RequestMethods.All;
-		}
-
-		/// <value>
-		/// The parsers to turn the resource arguments into function parameters.
-		/// </value>
-		public Func<string, object>[] Parsers { get; set; }
-		
-		//// <value>
-		/// The RequestMethod to accept.
-		/// </value>
-		public RequestMethods Method { get; set; }
-
-		/// <summary>
-		/// The pattern which to match and reflect the path. Simple regular expressions are allowed.
-		/// </summary>
-		public string Pattern { get; set; }
 	}
 }

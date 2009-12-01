@@ -86,10 +86,17 @@ namespace Flow
 							}
 							var request = new Request(@Router, client, Port);
 							bool accepted = false;
-							foreach (var processor in Processors) {
-								accepted = processor.Respond(request);
-								if (accepted)
-									break;
+							try {
+								foreach (var processor in Processors) {
+									accepted = processor.Respond(request);
+									if (accepted)
+										break;
+								}
+							}
+							catch(Exception ex) {
+								accepted = true;
+								if(Router.ErrorHandler(ex, request))
+									throw new Exception("An internal error caused abortion of this router.", ex);
 							}
 
 							if (!accepted) {
