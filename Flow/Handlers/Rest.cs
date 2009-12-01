@@ -190,13 +190,9 @@ namespace Flow.Handlers
 				method
 				.GetParameters()
 				.Skip(1)
-				.Select(param => Attribute.GetCustomAttribute(param, typeof(DefaultParameterValueAttribute)))
-				.Cast<DefaultParameterValueAttribute>()
-				.Select(attribute => (hasDefaultValue |= attribute != null) ? (string)attribute.Value : ".*")
+				.Select(param => (hasDefaultValue |= (param.Attributes & ParameterAttributes.HasDefault) != 0) ? param.DefaultValue.ToString() : ".*")
 				.Aggregate(new StringBuilder(), (builder, str) => builder.Append("/").Append(str))
 				.ToString();
-			Console.WriteLine(defaultValuesPattern);
-			Console.WriteLine(hasDefaultValue);
 			
 			if(hasDefaultValue) {
 				return
