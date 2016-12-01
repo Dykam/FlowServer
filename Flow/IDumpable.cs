@@ -1,9 +1,7 @@
-using System;
-
 namespace Flow
 {
-	public interface IDumpable<T>
-	{
-		T Dump();
-	}
+    public interface IDumpable<T>
+    {
+        T Dump();
+    }
 }
